@@ -1,7 +1,7 @@
-# agent-skills
+# rimakes-skills
 
 This repository is a **catalog of Agent Skills** authored by the user, meant to be published on
-[skills.sh](https://skills.sh) and installed with the `skills` CLI (`npx skills add OWNER/agent-skills`).
+[skills.sh](https://skills.sh) and installed with the `skills` CLI (`npx skills add RicSala/rimakes-skills`).
 It is **not** an application — there is no build, no runtime. The deliverable is the skills themselves:
 Markdown instructions (plus bundled assets) that teach a coding agent how to do something well.
 
@@ -41,7 +41,7 @@ Two skills, each a self-contained folder under `skills/`:
 ## Repository layout
 
 ```
-agent-skills/
+rimakes-skills/
 ├── CLAUDE.md          # this file
 ├── README.md          # public-facing: what's inside + install/update commands
 └── skills/
@@ -77,7 +77,7 @@ The skill encodes a specific philosophy — respect it:
 
 ## Commands (skills CLI)
 
-- `npx skills add OWNER/agent-skills [--all | -s <skill> | -l] [-g]` — install / list
+- `npx skills add RicSala/rimakes-skills [--all | -s <skill> | -l] [-g]` — install / list
 - `npx skills update [-g | -p | <skill>]` — pull latest from source
 - `npx skills list` — list installed
 - `npx skills init <name>` — scaffold a new skill

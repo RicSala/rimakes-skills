@@ -1,10 +1,7 @@
-# agent-skills
+# rimakes-skills
 
 A small catalog of [Agent Skills](https://skills.sh) for Claude Code (and other
 compatible coding agents), installable with the `skills` CLI.
-
-> Replace `OWNER` below with your GitHub username once this repo is pushed
-> (e.g. `github.com/OWNER/agent-skills`).
 
 ## Skills in this repo
 
@@ -23,16 +20,16 @@ safe to stop. Slash-command only (`/session-close`).
 
 ```bash
 # Install everything from this repo (interactive picker)
-npx skills add OWNER/agent-skills
+npx skills add RicSala/rimakes-skills
 
 # Install all, no prompts
-npx skills add OWNER/agent-skills --all
+npx skills add RicSala/rimakes-skills --all
 
 # Install a single skill, globally (user-level)
-npx skills add OWNER/agent-skills -s product-spec -g
+npx skills add RicSala/rimakes-skills -s product-spec -g
 
 # Just list what's in the repo without installing
-npx skills add OWNER/agent-skills -l
+npx skills add RicSala/rimakes-skills -l
 ```
 
 ## Keep them up to date
