@@ -1,5 +1,5 @@
 ---
-name: product-spec
+name: rimakes-product-spec
 description: >-
   Drive an in-depth conversation with the user to define a product, then capture
   everything in a single lossless SPEC.md (product spec + per-feature build-status

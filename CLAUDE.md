@@ -12,14 +12,14 @@ prefer plain language, and suggest commits often (conventional commits).
 
 Two skills, each a self-contained folder under `skills/`:
 
-- **`product-spec`** — drives an in-depth conversation to define a product and produces a single,
+- **`rimakes-product-spec`** — drives an in-depth conversation to define a product and produces a single,
   lossless `SPEC.md` (living product spec + per-feature build-status tracking + phased roadmap +
-  decisions log). Has a bundled template at `skills/product-spec/assets/SPEC_TEMPLATE.md` that the
+  decisions log). Has a bundled template at `skills/rimakes-product-spec/assets/SPEC_TEMPLATE.md` that the
   skill copies from; `SKILL.md` references it by **relative path**, so the `assets/` folder must
   always travel with the skill — don't move or rename it.
-- **`session-close`** — an end-of-session checklist skill (Next.js-oriented). Slash-command only
+- **`rimakes-session-close`** — an end-of-session checklist skill (Next.js-oriented). Slash-command only
   (`disable-model-invocation: true` in its frontmatter → it runs only when the user types
-  `/session-close`, never auto-triggered).
+  `/rimakes-session-close`, never auto-triggered).
 
 **These skills are carefully tuned and the user likes them as they are.** Don't restructure or
 "improve" them unprompted. Make surgical, requested changes and keep their shape.
@@ -45,17 +45,17 @@ rimakes-skills/
 ├── CLAUDE.md          # this file
 ├── README.md          # public-facing: what's inside + install/update commands
 └── skills/
-    ├── product-spec/
+    ├── rimakes-product-spec/
     │   ├── SKILL.md
     │   └── assets/SPEC_TEMPLATE.md
-    └── session-close/
+    └── rimakes-session-close/
         └── SKILL.md
 ```
 
 To add a new skill: `npx skills init <name>` (or create `skills/<name>/SKILL.md` by hand), then
 document it in `README.md`.
 
-## Design principles baked into `product-spec` (understand before editing it)
+## Design principles baked into `rimakes-product-spec` (understand before editing it)
 
 The skill encodes a specific philosophy — respect it:
 

@@ -1,6 +1,6 @@
 ---
-name: session-close
-description: Wrap up and safely close out a coding session on a Next.js project. Run the end-of-session checklist — sync project docs, verify nothing is left half-finished or inconsistent, and give a plain-language verdict on whether it's safe to stop. Invoke only when the user explicitly runs /session-close.
+name: rimakes-session-close
+description: Wrap up and safely close out a coding session on a Next.js project. Run the end-of-session checklist — sync project docs, verify nothing is left half-finished or inconsistent, and give a plain-language verdict on whether it's safe to stop. Invoke only when the user explicitly runs /rimakes-session-close.
 disable-model-invocation: true
 ---
 
