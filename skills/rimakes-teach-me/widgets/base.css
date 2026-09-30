@@ -1,0 +1,478 @@
+/* Teach-me base. Paste this into the page's <style>, before any widget CSS.
+   Every widget reads only these tokens. Change the values to fit the topic;
+   keep the names. */
+
+/* Layout: one reading column about 46rem wide; widgets sit in it as framed panels. */
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --fg: #172030;
+  --muted: #566276;
+  --line: #d6dde7;
+  --accent: #1f55c4;
+  --accent-soft: #e2e9fa;
+  --on-accent: #ffffff;
+  --mark: #fff0a3;
+  --good: #1a7443;
+  --good-soft: #def2e6;
+  --bad: #b3261e;
+  --bad-soft: #fbe3e1;
+  --code-bg: #edf1f6;
+  --hl-keyword: #8a3fb8;
+  --hl-string: #1a7443;
+  --hl-number: #b35c00;
+  --hl-comment: #6b7787;
+  --hl-title: #1f55c4;
+  --hl-attr: #9a3a63;
+  --hl-tag: #1f55c4;
+  --font-body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui,
+    -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SF Mono", Menlo,
+    Consolas, monospace;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a1f27;
+    --surface: #222833;
+    --fg: #e8ecf2;
+    --muted: #a3aebd;
+    --line: #363f4d;
+    --accent: #8fb0ff;
+    --accent-soft: #263657;
+    --on-accent: #0d1320;
+    --mark: #5a4d1c;
+    --good: #7ddba4;
+    --good-soft: #1b3a26;
+    --bad: #ff9a92;
+    --bad-soft: #43221f;
+    --code-bg: #141920;
+    --hl-keyword: #d3a2f3;
+    --hl-string: #9be0b6;
+    --hl-number: #f2b877;
+    --hl-comment: #8d98a8;
+    --hl-title: #9cc0ff;
+    --hl-attr: #f0a1c2;
+    --hl-tag: #9cc0ff;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #1a1f27;
+  --surface: #222833;
+  --fg: #e8ecf2;
+  --muted: #a3aebd;
+  --line: #363f4d;
+  --accent: #8fb0ff;
+  --accent-soft: #263657;
+  --on-accent: #0d1320;
+  --mark: #5a4d1c;
+  --good: #7ddba4;
+  --good-soft: #1b3a26;
+  --bad: #ff9a92;
+  --bad-soft: #43221f;
+  --code-bg: #141920;
+  --hl-keyword: #d3a2f3;
+  --hl-string: #9be0b6;
+  --hl-number: #f2b877;
+  --hl-comment: #8d98a8;
+  --hl-title: #9cc0ff;
+  --hl-attr: #f0a1c2;
+  --hl-tag: #9cc0ff;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  padding-inline: 16px;
+}
+
+.page {
+  max-width: 46rem;
+  margin-inline: auto;
+  padding-block: 2.5rem 4rem;
+  display: grid;
+  gap: 3rem;
+}
+
+.lesson {
+  display: grid;
+  gap: 1rem;
+}
+
+.lesson > * {
+  min-width: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.2;
+  text-wrap: balance;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.125rem;
+}
+
+p,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+a {
+  color: var(--accent);
+}
+
+.lead {
+  font-size: 1.2rem;
+}
+
+.eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+pre {
+  margin: 0;
+  background: var(--code-bg);
+  border-radius: var(--radius);
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.callout {
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.callout > strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.diagram {
+  overflow-x: auto;
+}
+
+.diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Syntax highlighting: highlight.js classes, colored only through tokens.
+   Widgets call `hl(text, lang)`; prose uses <pre><code class="language-ts">. */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-built_in,
+.hljs-type {
+  color: var(--hl-keyword);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-template-tag,
+.hljs-addition {
+  color: var(--hl-string);
+}
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-meta {
+  color: var(--hl-number);
+}
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_,
+.hljs-section,
+.hljs-name {
+  color: var(--hl-title);
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-property,
+.hljs-params {
+  color: var(--hl-attr);
+}
+.hljs-tag {
+  color: var(--hl-tag);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 700;
+}
+
+/* On this page: a list of the sections, and the theme switch.
+   Narrow: a bar at the top of the page, list opens on tap.
+   Wide (78rem+): a sidebar fixed to the left of the reading column. */
+.toc {
+  display: grid;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+.toc-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.toc-toggle,
+.theme-toggle {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.toc-toggle:hover,
+.theme-toggle:hover {
+  border-color: var(--accent);
+}
+.toc-toggle::after {
+  content: " ▾";
+  color: var(--muted);
+}
+.toc-toggle[aria-expanded="true"]::after {
+  content: " ▴";
+}
+.toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  display: grid;
+  gap: 0.15rem;
+  border-left: 2px solid var(--line);
+}
+.toc:not(.is-open) .toc-list {
+  display: none;
+}
+.toc-list a {
+  display: block;
+  padding: 0.25rem 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  margin-left: -2px;
+}
+.toc-list a:hover {
+  color: var(--fg);
+}
+.toc-list a.is-active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  font-weight: 700;
+}
+@media (min-width: 78rem) {
+  .toc {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 2.5rem);
+    left: max(1rem, calc(50vw - 23rem - 16rem));
+    width: 14rem;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+  .toc-toggle {
+    display: none;
+  }
+  .toc-bar {
+    order: 2;
+  }
+  .toc:not(.is-open) .toc-list,
+  .toc-list {
+    display: grid;
+  }
+}
+
+/* The frame every widget sits in */
+.widget {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.widget > * {
+  min-width: 0;
+}
+
+.widget-head {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.widget-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.widget-title {
+  font-size: 1.125rem;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn {
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--code-bg);
+  color: var(--fg);
+}
+
+.pill-good {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.pill-bad {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.counter {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

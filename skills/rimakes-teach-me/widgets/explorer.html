@@ -1,0 +1,185 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Explorer Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+
+<style>
+  /* WIDGET explorer: CSS */
+  .w-explorer .ex-inputs {
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  }
+  .w-explorer .ex-input {
+    display: grid;
+    gap: 0.3rem;
+  }
+  .w-explorer .ex-input label {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .w-explorer .ex-input output {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+  }
+  .w-explorer input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .w-explorer .ex-bars {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .w-explorer .ex-bar {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr) 6rem;
+    gap: 0.6rem;
+    align-items: center;
+    font-size: 0.88rem;
+  }
+  .w-explorer .ex-track {
+    height: 0.9rem;
+    background: var(--code-bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .w-explorer .ex-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.2s ease;
+  }
+  .w-explorer .ex-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .w-explorer .ex-summary {
+    font-weight: 700;
+  }
+  /* /WIDGET explorer: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET explorer: HTML -->
+  <div class="widget w-explorer" data-widget="explorer">
+    <div class="widget-head">
+      <p class="widget-label">Change it and watch</p>
+      <h3 class="widget-title">How long a sender waits between retries</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "model": "backoff",
+        "inputs": [
+          { "id": "base", "label": "First wait", "min": 100, "max": 2000, "step": 100, "value": 500, "unit": "ms" },
+          { "id": "factor", "label": "Each wait is longer by", "min": 1, "max": 4, "step": 0.5, "value": 2, "unit": "×" },
+          { "id": "tries", "label": "Retries", "min": 1, "max": 8, "step": 1, "value": 5, "unit": "" }
+        ],
+        "note": "With ×1, every wait is the same. With ×2 or more, the waits grow fast, which gives a broken service time to recover."
+      }
+    </script>
+  </div>
+  <!-- /WIDGET explorer: HTML -->
+</main>
+
+<script>
+  /* WIDGET explorer: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    const formatMs = (ms) => {
+      if (ms < 1000) return `${Math.round(ms)} ms`;
+      if (ms < 120000) return `${(ms / 1000).toFixed(1)} s`;
+      if (ms < 7200000) return `${(ms / 60000).toFixed(1)} min`;
+      return `${(ms / 3600000).toFixed(1)} h`;
+    };
+
+    /* One function per model. It gets the input values by id and returns
+       rows for the bars and one summary sentence. Add a model for a new topic. */
+    const MODELS = {
+      backoff(values) {
+        const rows = [];
+        let wait = values.base;
+        let total = 0;
+        for (let retry = 1; retry <= values.tries; retry++) {
+          rows.push({ label: `Retry ${retry}`, value: wait, text: formatMs(wait) });
+          total += wait;
+          wait *= values.factor;
+        }
+        return { rows, summary: `If every retry fails, the sender waits ${formatMs(total)} in total before it gives up.` };
+      },
+    };
+
+    document.querySelectorAll('[data-widget="explorer"]').forEach((root, widgetIndex) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const model = MODELS[data.model];
+
+      const inputs = document.createElement("div");
+      inputs.className = "ex-inputs";
+      inputs.innerHTML = data.inputs
+        .map((input) => {
+          const id = `explorer-${widgetIndex}-${input.id}`;
+          return `<div class="ex-input">
+                    <label for="${id}">${esc(input.label)} <output for="${id}"></output></label>
+                    <input type="range" id="${id}" data-key="${esc(input.id)}"
+                      min="${input.min}" max="${input.max}" step="${input.step}" value="${input.value}" />
+                  </div>`;
+        })
+        .join("");
+
+      const bars = document.createElement("ul");
+      bars.className = "ex-bars";
+
+      const summary = document.createElement("p");
+      summary.className = "ex-summary";
+      summary.setAttribute("aria-live", "polite");
+
+      const note = document.createElement("p");
+      note.className = "muted";
+      note.innerHTML = data.note ? inline(data.note) : "";
+
+      root.append(inputs, bars, summary, ...(data.note ? [note] : []));
+
+      const update = () => {
+        const values = {};
+        inputs.querySelectorAll("input").forEach((range) => {
+          const input = data.inputs.find((item) => item.id === range.dataset.key);
+          values[input.id] = Number(range.value);
+          range.previousElementSibling.querySelector("output").textContent = `${range.value}${input.unit ? ` ${input.unit}` : ""}`;
+        });
+        const result = model(values);
+        const largest = Math.max(...result.rows.map((row) => row.value), 1);
+        bars.innerHTML = result.rows
+          .map(
+            (row) => `<li class="ex-bar">
+                        <span>${esc(row.label)}</span>
+                        <span class="ex-track" aria-hidden="true"><span class="ex-fill" style="width:${(row.value / largest) * 100}%;display:block"></span></span>
+                        <span class="ex-value">${esc(row.text)}</span>
+                      </li>`,
+          )
+          .join("");
+        summary.textContent = result.summary;
+      };
+
+      if (!model) {
+        summary.textContent = `No model named "${data.model}" in MODELS.`;
+        return;
+      }
+      inputs.addEventListener("input", update);
+      update();
+    });
+  })();
+  /* /WIDGET explorer: JS */
+</script>

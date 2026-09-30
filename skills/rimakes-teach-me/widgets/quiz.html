@@ -1,0 +1,207 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Quiz Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+<style>
+  /* WIDGET quiz: CSS */
+  .w-quiz .qz-list {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .w-quiz .qz-question {
+    display: grid;
+    gap: 0.7rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .w-quiz .qz-question legend {
+    padding: 0;
+    margin-bottom: 0.2rem;
+  }
+  .w-quiz .qz-options {
+    display: grid;
+    gap: 0.45rem;
+  }
+  .w-quiz .qz-option {
+    font: inherit;
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .w-quiz .qz-option:hover:not(:disabled) {
+    border-color: var(--accent);
+  }
+  .w-quiz .qz-option:disabled {
+    cursor: default;
+  }
+  .w-quiz .qz-option.is-right {
+    background: var(--good-soft);
+    border-color: var(--good);
+    color: var(--fg);
+  }
+  .w-quiz .qz-option.is-wrong {
+    background: var(--bad-soft);
+    border-color: var(--bad);
+    color: var(--fg);
+  }
+  .w-quiz .qz-option.is-other {
+    opacity: 0.55;
+  }
+  .w-quiz .qz-feedback {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .w-quiz .qz-feedback:empty {
+    display: none;
+  }
+  /* /WIDGET quiz: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET quiz: HTML -->
+  <div class="widget w-quiz" data-widget="quiz">
+    <div class="widget-head">
+      <p class="widget-label">Check yourself</p>
+      <h3 class="widget-title">Webhooks that run twice</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "questions": [
+          {
+            "question": "Stripe sends the same `invoice.paid` event twice. What stops you from giving the customer two months?",
+            "options": ["Checking the signature", "Saving the event id and skipping ids you have seen", "Answering 200 quickly"],
+            "answer": 1,
+            "explain": [
+              "The signature proves Stripe sent the event. The second copy is also signed by Stripe, so it passes too.",
+              "The second copy has the same id. The handler finds that id and skips the work.",
+              "A fast 200 makes a second copy less likely. Stripe can still send one."
+            ]
+          },
+          {
+            "question": "The email call throws. Stripe sends the event again. What happens?",
+            "code": "await db.subscription.update({ where: { id }, data: { status: \"active\" } })\nawait sendEmail(customer, \"Thanks for paying\")\nawait db.webhookEvent.create({ data: { id: event.id } })",
+            "options": ["The update and the email run again", "Nothing, because the event id is saved", "The subscription update is undone"],
+            "answer": 0,
+            "explain": [
+              "The code stopped at line 2, so line 3 never saved the event id. The second copy looks new, and everything runs again.",
+              "The id is saved on line 3. The code never got there.",
+              "Nothing undoes line 1. The three calls are not in one transaction."
+            ]
+          },
+          {
+            "question": "When should the handler check the signature?",
+            "options": ["Before it parses or trusts the body", "After it saves the event", "Only in production"],
+            "answer": 0,
+            "explain": [
+              "Until the signature is checked, anyone could have sent the body.",
+              "By then the handler has already acted on a body that anyone could have sent.",
+              "A test or staging server is reachable too. Check it everywhere; use Stripe's test keys outside production."
+            ]
+          }
+        ]
+      }
+    </script>
+  </div>
+  <!-- /WIDGET quiz: HTML -->
+</main>
+
+<script>
+  /* WIDGET quiz: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+    const hl = (text, lang) =>
+      window.hljs?.getLanguage(lang) ? window.hljs.highlight(text, { language: lang, ignoreIllegals: true }).value : esc(text);
+
+    document.querySelectorAll('[data-widget="quiz"]').forEach((root) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const results = data.questions.map(() => null);
+
+      const list = document.createElement("div");
+      list.className = "qz-list";
+      list.innerHTML = data.questions
+        .map(
+          (item, q) => `
+          <fieldset class="qz-question" data-q="${q}">
+            <legend class="eyebrow">Question ${q + 1} of ${data.questions.length}</legend>
+            <p>${inline(item.question)}</p>
+            ${item.code ? `<pre><code>${hl(item.code, item.lang || data.lang || "typescript")}</code></pre>` : ""}
+            <div class="qz-options">
+              ${item.options.map((option, o) => `<button type="button" class="qz-option" data-o="${o}" aria-pressed="false">${inline(option)}</button>`).join("")}
+            </div>
+            <div class="qz-feedback" aria-live="polite"></div>
+          </fieldset>`,
+        )
+        .join("");
+
+      const score = document.createElement("p");
+      score.className = "counter";
+      score.setAttribute("aria-live", "polite");
+
+      root.append(list, score);
+
+      const updateScore = () => {
+        const answered = results.filter((result) => result !== null).length;
+        const right = results.filter(Boolean).length;
+        score.textContent = answered === 0 ? `${data.questions.length} questions` : `${right} of ${answered} right so far`;
+      };
+
+      const reset = (fieldset) => {
+        results[Number(fieldset.dataset.q)] = null;
+        fieldset.querySelectorAll(".qz-option").forEach((button) => {
+          button.disabled = false;
+          button.className = "qz-option";
+          button.setAttribute("aria-pressed", "false");
+        });
+        fieldset.querySelector(".qz-feedback").innerHTML = "";
+        fieldset.querySelector(".qz-option").focus();
+        updateScore();
+      };
+
+      list.addEventListener("click", (event) => {
+        const fieldset = event.target.closest(".qz-question");
+        if (!fieldset) return;
+        if (event.target.closest(".qz-retry")) return reset(fieldset);
+        const button = event.target.closest(".qz-option");
+        if (!button || button.disabled) return;
+
+        const q = Number(fieldset.dataset.q);
+        const chosen = Number(button.dataset.o);
+        const item = data.questions[q];
+        const correct = chosen === item.answer;
+        results[q] = correct;
+
+        fieldset.querySelectorAll(".qz-option").forEach((option) => {
+          const o = Number(option.dataset.o);
+          option.disabled = true;
+          option.classList.add(o === item.answer ? "is-right" : o === chosen ? "is-wrong" : "is-other");
+        });
+        button.setAttribute("aria-pressed", "true");
+
+        const lines = [
+          `<span class="pill ${correct ? "pill-good" : "pill-bad"}">${correct ? "Right" : "Not quite"}</span>`,
+          `<p>${inline(item.explain[chosen])}</p>`,
+        ];
+        if (!correct) lines.push(`<p><strong>Right answer:</strong> ${inline(item.options[item.answer])}. ${inline(item.explain[item.answer])}</p>`);
+        if (!correct) lines.push(`<div><button type="button" class="btn qz-retry">Try again</button></div>`);
+        fieldset.querySelector(".qz-feedback").innerHTML = lines.join("");
+        updateScore();
+      });
+
+      updateScore();
+    });
+  })();
+  /* /WIDGET quiz: JS */
+</script>

@@ -1,0 +1,206 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Lanes Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+
+<style>
+  /* WIDGET lanes: CSS */
+  .w-lanes .ln-board {
+    overflow-x: auto;
+  }
+  .w-lanes .ln-grid {
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.88rem;
+  }
+  .w-lanes .ln-head {
+    font-weight: 700;
+    text-align: center;
+    padding: 0.35rem 0.25rem;
+    border-radius: 6px;
+    background: var(--code-bg);
+  }
+  .w-lanes .ln-time {
+    align-self: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .w-lanes .ln-cell {
+    min-height: 2.6rem;
+    border-radius: 6px;
+    display: grid;
+    gap: 0.25rem;
+  }
+  .w-lanes .ln-event {
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+  }
+  .w-lanes .is-future {
+    opacity: 0.4;
+  }
+  .w-lanes .is-past .ln-event {
+    color: var(--muted);
+  }
+  .w-lanes .is-current .ln-event {
+    background: var(--mark);
+    color: var(--fg);
+    font-weight: 700;
+    border-color: transparent;
+  }
+  .w-lanes .ln-event.is-bad:not(.is-waiting) {
+    background: var(--bad-soft);
+    color: var(--bad);
+    border-color: transparent;
+  }
+  .w-lanes .ln-outcome {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    background: var(--bad-soft);
+    transition: opacity 0.2s ease;
+  }
+  .w-lanes .ln-outcome.is-waiting {
+    opacity: 0.4;
+  }
+  .w-lanes .ln-outcome-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bad);
+  }
+  /* /WIDGET lanes: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET lanes: HTML -->
+  <div class="widget w-lanes" data-widget="lanes">
+    <div class="widget-head">
+      <p class="widget-label">Play it in time</p>
+      <h3 class="widget-title">Two buyers, one item left</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "lanes": ["Buyer A", "Buyer B", "Database"],
+        "events": [
+          { "t": 1, "lane": 0, "text": "Reads stock: 1" },
+          { "t": 1, "lane": 2, "text": "stock = 1" },
+          { "t": 2, "lane": 1, "text": "Reads stock: 1" },
+          { "t": 3, "lane": 0, "text": "1 > 0, so writes stock = 0" },
+          { "t": 3, "lane": 2, "text": "stock = 0" },
+          { "t": 4, "lane": 1, "text": "Also saw 1, so writes stock = 0", "bad": true },
+          { "t": 4, "lane": 2, "text": "stock = 0", "bad": true }
+        ],
+        "outcome": "Both buyers paid for the last item. The database says 0, so nothing shows that the item was sold twice."
+      }
+    </script>
+  </div>
+  <!-- /WIDGET lanes: HTML -->
+</main>
+
+<script>
+  /* WIDGET lanes: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    document.querySelectorAll('[data-widget="lanes"]').forEach((root) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const lastMoment = Math.max(...data.events.map((event) => event.t));
+      const count = data.lanes.length;
+      let current = 1;
+      let timer = null;
+
+      let cells = "";
+      for (let t = 1; t <= lastMoment; t++) {
+        cells += `<span class="ln-time" data-t="${t}">${t}</span>`;
+        data.lanes.forEach((_, lane) => {
+          const here = data.events.filter((event) => event.t === t && event.lane === lane);
+          cells += `<div class="ln-cell" data-t="${t}">${here
+            .map((event) => `<div class="ln-event${event.bad ? " is-bad" : ""}">${inline(event.text)}</div>`)
+            .join("")}</div>`;
+        });
+      }
+
+      const board = document.createElement("div");
+      board.className = "ln-board";
+      board.innerHTML = `
+        <div class="ln-grid" style="grid-template-columns:2rem repeat(${count}, minmax(0, 1fr));min-width:${2 + count * 8}rem">
+          <span class="ln-time">Time</span>
+          ${data.lanes.map((lane) => `<div class="ln-head">${inline(lane)}</div>`).join("")}
+          ${cells}
+        </div>`;
+
+      const outcome = document.createElement("div");
+      outcome.className = "ln-outcome";
+      outcome.innerHTML = `<strong class="ln-outcome-label">Result</strong><p>${inline(data.outcome)}</p>`;
+      outcome.setAttribute("aria-live", "polite");
+
+      const controls = document.createElement("div");
+      controls.className = "btn-row";
+      controls.innerHTML = `
+        <button type="button" class="btn ln-back">Back</button>
+        <button type="button" class="btn btn-primary ln-next">Next moment</button>
+        <button type="button" class="btn ln-play">Play</button>
+        <span class="counter ln-count"></span>`;
+
+      root.append(board, ...(data.outcome ? [outcome] : []), controls);
+
+      const timed = [...board.querySelectorAll("[data-t]")];
+      const back = controls.querySelector(".ln-back");
+      const next = controls.querySelector(".ln-next");
+      const play = controls.querySelector(".ln-play");
+      const counter = controls.querySelector(".ln-count");
+
+      const show = (moment) => {
+        current = Math.max(1, Math.min(moment, lastMoment));
+        timed.forEach((element) => {
+          const t = Number(element.dataset.t);
+          element.classList.toggle("is-past", t < current);
+          element.classList.toggle("is-current", t === current);
+          element.classList.toggle("is-future", t > current);
+          element.querySelectorAll(".is-bad").forEach((event) => event.classList.toggle("is-waiting", t > current));
+        });
+        outcome.classList.toggle("is-waiting", current < lastMoment);
+        counter.textContent = `Moment ${current} of ${lastMoment}`;
+        if (current === 1 && document.activeElement === back) next.focus();
+        back.disabled = current === 1;
+        next.textContent = current === lastMoment ? "Start again" : "Next moment";
+      };
+
+      const stop = () => {
+        clearInterval(timer);
+        timer = null;
+        play.textContent = "Play";
+      };
+
+      back.addEventListener("click", () => {
+        stop();
+        show(current - 1);
+      });
+      next.addEventListener("click", () => {
+        stop();
+        show(current === lastMoment ? 1 : current + 1);
+      });
+      play.addEventListener("click", () => {
+        if (timer) return stop();
+        if (current === lastMoment) show(1);
+        play.textContent = "Pause";
+        timer = setInterval(() => {
+          if (current >= lastMoment) return stop();
+          show(current + 1);
+        }, 1400);
+      });
+
+      show(1);
+    });
+  })();
+  /* /WIDGET lanes: JS */
+</script>

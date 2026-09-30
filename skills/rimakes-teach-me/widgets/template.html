@@ -1,0 +1,136 @@
+<title>Topic Name</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<style>
+  /* 1. Paste widgets/base.css here. Change the token values to fit the topic; keep the names. */
+  /* 2. Paste the CSS block of each widget the page uses, once per widget. */
+</style>
+
+<!-- Code highlighting. Keep this tag: every widget that shows code calls window.hljs when it exists. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+<!-- On this page: the page script fills the list from every section.lesson[id] that has an h2. -->
+<nav class="toc" aria-label="On this page">
+  <div class="toc-bar">
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="toc-list">On this page</button>
+    <button type="button" class="theme-toggle" aria-live="polite">Theme: system</button>
+  </div>
+  <ol class="toc-list" id="toc-list"></ol>
+</nav>
+
+<main class="page">
+  <header class="lesson">
+    <p class="eyebrow">The area this topic belongs to</p>
+    <h1>Topic Name</h1>
+    <p class="lead">
+      The point, in two or three sentences: what the thing is and why it matters to you. Someone who
+      reads only this paragraph knows the answer.
+    </p>
+  </header>
+
+  <!-- One section per idea, in the order the ideas build on each other. Every section needs an id: the nav is built from them. -->
+  <section class="lesson" id="first-idea">
+    <h2>A heading that states the idea</h2>
+    <p>Short paragraphs. One idea per sentence.</p>
+    <!-- Then a picture (mermaid, SVG in a .diagram box), a widget, or both. -->
+    <!-- Code in prose: <pre><code class="language-ts">…</code></pre>. The page script highlights it. -->
+    <div class="callout">
+      <strong>Key point</strong>
+      <p>The one sentence to remember from this section, when there is one.</p>
+    </div>
+  </section>
+
+  <section class="lesson" id="check-yourself">
+    <h2>Check yourself</h2>
+    <!-- A quiz widget with 3 to 5 questions, one per goal. -->
+  </section>
+
+  <!-- Only when the topic comes from the user's repo. Paths as text: links to files do not open from an artifact. -->
+  <section class="lesson" id="in-your-code">
+    <h2>Where this is in your code</h2>
+    <ul>
+      <li><code>path/to/file.ts:42</code>: what this code does, in one line.</li>
+    </ul>
+  </section>
+
+  <section class="lesson" id="good-to-know">
+    <h2>Good to know</h2>
+    <ul>
+      <li>True, but not needed to act.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+  /* PAGE: JS. Keep this block: it builds the "On this page" list, marks the section in view,
+     runs the theme switch, and highlights <pre><code class="language-…"> in prose. */
+  (() => {
+    const nav = document.querySelector(".toc");
+    const list = document.getElementById("toc-list");
+    const toggle = nav?.querySelector(".toc-toggle");
+    const sections = [...document.querySelectorAll("main section.lesson[id]")].filter((s) => s.querySelector("h2"));
+
+    if (nav && list && sections.length) {
+      list.innerHTML = sections
+        .map((section) => `<li><a href="#${section.id}">${section.querySelector("h2").textContent}</a></li>`)
+        .join("");
+      const links = new Map(sections.map((section, i) => [section.id, list.querySelectorAll("a")[i]]));
+
+      toggle?.addEventListener("click", () => {
+        const open = nav.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", String(open));
+      });
+      list.addEventListener("click", (event) => {
+        const link = event.target.closest("a");
+        if (!link) return;
+        if (window.matchMedia("(max-width: 77.99rem)").matches) {
+          nav.classList.remove("is-open");
+          toggle?.setAttribute("aria-expanded", "false");
+        }
+      });
+
+      const visible = new Set();
+      const mark = () => {
+        const first = sections.find((section) => visible.has(section.id)) ?? sections[0];
+        links.forEach((link, id) => link.classList.toggle("is-active", id === first.id));
+      };
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => (entry.isIntersecting ? visible.add(entry.target.id) : visible.delete(entry.target.id)));
+          mark();
+        },
+        { rootMargin: "-10% 0px -60% 0px", threshold: 0 },
+      );
+      sections.forEach((section) => observer.observe(section));
+      mark();
+    }
+
+    const theme = nav?.querySelector(".theme-toggle");
+    if (theme) {
+      const order = ["system", "light", "dark"];
+      const apply = (value) => {
+        if (value === "system") delete document.documentElement.dataset.theme;
+        else document.documentElement.dataset.theme = value;
+        theme.textContent = `Theme: ${value}`;
+      };
+      let current = "system";
+      try {
+        current = order.includes(localStorage.getItem("teach-theme")) ? localStorage.getItem("teach-theme") : "system";
+      } catch {}
+      apply(current);
+      theme.addEventListener("click", () => {
+        current = order[(order.indexOf(current) + 1) % order.length];
+        apply(current);
+        try {
+          localStorage.setItem("teach-theme", current);
+        } catch {}
+      });
+    }
+
+    if (window.hljs) {
+      document.querySelectorAll('pre code[class*="language-"]').forEach((code) => window.hljs.highlightElement(code));
+    }
+  })();
+  /* /PAGE: JS */
+
+  /* 3. Paste the JS block of each widget the page uses, once per widget. */
+</script>

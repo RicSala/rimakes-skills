@@ -1,0 +1,165 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Compare Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+<style>
+  /* WIDGET compare: CSS */
+  .w-compare .cmp-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.25rem;
+    border-radius: 10px;
+    background: var(--code-bg);
+  }
+  .w-compare .cmp-tab {
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 700;
+    min-height: 2.4rem;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .w-compare .cmp-tab[aria-selected="true"] {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--fg);
+  }
+  .w-compare .cmp-panel {
+    display: grid;
+    gap: 0.9rem;
+  }
+  .w-compare .cmp-code {
+    padding-inline: 0;
+  }
+  .w-compare .cmp-code code {
+    display: grid;
+    min-width: max-content;
+  }
+  .w-compare .cmp-line {
+    padding-inline: 1rem;
+    white-space: pre;
+  }
+  .w-compare .cmp-line.is-marked {
+    background: var(--mark);
+  }
+  /* /WIDGET compare: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET compare: HTML -->
+  <div class="widget w-compare" data-widget="compare">
+    <div class="widget-head">
+      <p class="widget-label">Compare</p>
+      <h3 class="widget-title">Taking one item out of stock</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "options": [
+          {
+            "label": "Read, then write",
+            "verdict": "bad",
+            "verdictText": "Can sell the same item twice",
+            "code": "const product = await db.product.findUnique({ where: { id } })\nif (product.stock > 0) {\n  await db.product.update({\n    where: { id },\n    data: { stock: product.stock - 1 }\n  })\n}",
+            "mark": [1, 5],
+            "points": [
+              "The code reads `stock` on line 1 and writes it on line 5. Other requests can run in between.",
+              "Two buyers can both read `stock = 1`. Both write `stock = 0`, so two items are sold but the stock only went down by one."
+            ]
+          },
+          {
+            "label": "One atomic update",
+            "verdict": "good",
+            "verdictText": "Safe when two requests run at once",
+            "code": "const result = await db.product.updateMany({\n  where: { id, stock: { gt: 0 } },\n  data: { stock: { decrement: 1 } }\n})\nif (result.count === 0) throw soldOut()",
+            "mark": [2, 3, 5],
+            "points": [
+              "The database checks `stock > 0` and subtracts 1 in one step. No other request can run in between.",
+              "The second buyer's update matches no row, so `count` is 0 and the code says the item is sold out."
+            ]
+          }
+        ]
+      }
+    </script>
+  </div>
+  <!-- /WIDGET compare: HTML -->
+</main>
+
+<script>
+  /* WIDGET compare: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+    const hl = (text, lang) =>
+      window.hljs?.getLanguage(lang) ? window.hljs.highlight(text, { language: lang, ignoreIllegals: true }).value : esc(text);
+
+    document.querySelectorAll('[data-widget="compare"]').forEach((root, widgetIndex) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const panelId = `compare-${widgetIndex}-panel`;
+
+      const tabs = document.createElement("div");
+      tabs.className = "cmp-tabs";
+      tabs.setAttribute("role", "tablist");
+      tabs.setAttribute("aria-label", root.querySelector(".widget-title")?.textContent || "Versions");
+      tabs.innerHTML = data.options
+        .map(
+          (option, i) =>
+            `<button type="button" role="tab" class="cmp-tab" id="compare-${widgetIndex}-tab-${i}" aria-controls="${panelId}">${esc(option.label)}</button>`,
+        )
+        .join("");
+
+      const panel = document.createElement("div");
+      panel.className = "cmp-panel";
+      panel.id = panelId;
+      panel.setAttribute("role", "tabpanel");
+
+      root.append(tabs, panel);
+      const buttons = [...tabs.querySelectorAll(".cmp-tab")];
+
+      const show = (index) => {
+        const option = data.options[index];
+        buttons.forEach((button, i) => {
+          button.setAttribute("aria-selected", String(i === index));
+          button.tabIndex = i === index ? 0 : -1;
+        });
+        panel.setAttribute("aria-labelledby", buttons[index].id);
+        const marked = new Set(option.mark || []);
+        const lang = option.lang || data.lang || "typescript";
+        panel.innerHTML = `
+          <span class="pill ${option.verdict === "good" ? "pill-good" : option.verdict === "bad" ? "pill-bad" : ""}">${esc(option.verdictText || option.label)}</span>
+          <pre class="cmp-code"><code>${option.code
+            .split("\n")
+            .map((text, i) => `<span class="cmp-line${marked.has(i + 1) ? " is-marked" : ""}">${hl(text, lang) || " "}</span>`)
+            .join("")}</code></pre>
+          <ul>${(option.points || []).map((point) => `<li>${inline(point)}</li>`).join("")}</ul>`;
+      };
+
+      buttons.forEach((button, i) => button.addEventListener("click", () => show(i)));
+      tabs.addEventListener("keydown", (event) => {
+        const current = buttons.indexOf(document.activeElement);
+        if (current < 0) return;
+        const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+        if (!step) return;
+        event.preventDefault();
+        const target = (current + step + buttons.length) % buttons.length;
+        buttons[target].focus();
+        show(target);
+      });
+
+      show(0);
+    });
+  })();
+  /* /WIDGET compare: JS */
+</script>

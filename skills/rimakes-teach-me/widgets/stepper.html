@@ -1,0 +1,267 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Stepper Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+
+<style>
+  /* WIDGET stepper: CSS */
+  .w-stepper .st-board {
+    overflow-x: auto;
+  }
+  .w-stepper .st-inner {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .w-stepper .st-actors,
+  .w-stepper .st-row {
+    display: grid;
+  }
+  .w-stepper .st-actor {
+    margin-inline: 0.25rem;
+    padding: 0.4rem 0.25rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--code-bg);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+  }
+  .w-stepper .st-rows {
+    position: relative;
+    display: grid;
+    gap: 0.15rem;
+  }
+  .w-stepper .st-lifeline {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-left: 2px dashed var(--line);
+  }
+  .w-stepper .st-row {
+    all: unset;
+    position: relative;
+    display: grid;
+    padding-block: 0.35rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .w-stepper .st-row:hover {
+    background: var(--code-bg);
+  }
+  .w-stepper .st-row:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .w-stepper .st-span {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .w-stepper .st-arrow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .w-stepper .st-label,
+  .w-stepper .st-self {
+    align-self: center;
+    text-align: center;
+    background: var(--surface);
+    padding: 0.05rem 0.4rem;
+    border-radius: 4px;
+  }
+  .w-stepper .st-self {
+    border: 1px solid var(--line);
+  }
+  .w-stepper .st-line {
+    position: relative;
+    height: 0;
+    border-top: 2px solid currentColor;
+    color: var(--muted);
+  }
+  .w-stepper .st-right .st-line::after,
+  .w-stepper .st-left .st-line::after {
+    content: "";
+    position: absolute;
+    top: -7px;
+    border-block: 6px solid transparent;
+  }
+  .w-stepper .st-right .st-line::after {
+    right: -2px;
+    border-left: 9px solid currentColor;
+  }
+  .w-stepper .st-left .st-line::after {
+    left: -2px;
+    border-right: 9px solid currentColor;
+  }
+  .w-stepper .is-past {
+    color: var(--muted);
+  }
+  .w-stepper .is-future {
+    opacity: 0.45;
+  }
+  .w-stepper .is-current .st-label,
+  .w-stepper .is-current .st-self {
+    background: var(--mark);
+    color: var(--fg);
+    font-weight: 700;
+  }
+  .w-stepper .is-current .st-line {
+    color: var(--accent);
+  }
+  .w-stepper .st-caption {
+    min-height: 3.2em;
+  }
+  /* /WIDGET stepper: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET stepper: HTML -->
+  <div class="widget w-stepper" data-widget="stepper">
+    <div class="widget-head">
+      <p class="widget-label">Step through it</p>
+      <h3 class="widget-title">What happens when Stripe sends a webhook</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "actors": ["Stripe", "Your API route", "Database"],
+        "steps": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "POST /webhooks/stripe",
+            "text": "Stripe sends the event as a POST request. The body says what happened, for example `invoice.paid`."
+          },
+          {
+            "from": 1,
+            "to": 1,
+            "label": "Check the signature",
+            "text": "The route checks the `Stripe-Signature` header against the raw body. If they do not match, the route answers 400 and stops."
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Seen evt_123 before?",
+            "text": "The route looks up the event id. Stripe can send the same event more than once."
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "label": "No, it is new",
+            "text": "No row has this id, so this is the first time the route sees the event."
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "label": "Save change + event id",
+            "text": "One transaction saves the new subscription state and the event id. Both are saved, or neither is."
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "label": "200 OK",
+            "text": "The route answers 200, and Stripe stops sending this event. Without a 200, Stripe sends it again later."
+          }
+        ]
+      }
+    </script>
+  </div>
+  <!-- /WIDGET stepper: HTML -->
+</main>
+
+<script>
+  /* WIDGET stepper: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    document.querySelectorAll('[data-widget="stepper"]').forEach((root) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const count = data.actors.length;
+      const columns = `repeat(${count}, minmax(0, 1fr))`;
+      let current = 0;
+
+      const stepRow = (step, index) => {
+        const first = Math.min(step.from, step.to);
+        const last = Math.max(step.from, step.to);
+        const inset = `calc(100% / ${(last - first + 1) * 2})`;
+        const direction = step.from === step.to ? "self" : step.to > step.from ? "right" : "left";
+        const mark =
+          direction === "self"
+            ? `<span class="st-self">${inline(step.label)}</span>`
+            : `<span class="st-arrow st-${direction}" style="margin-inline:${inset}">
+                 <span class="st-label">${inline(step.label)}</span><span class="st-line"></span>
+               </span>`;
+        return `<button type="button" class="st-row" data-index="${index}" style="grid-template-columns:${columns}"
+                  aria-label="Step ${index + 1}: ${esc(step.label)}">
+                  <span class="st-span" style="grid-column:${first + 1} / ${last + 2}">${mark}</span>
+                </button>`;
+      };
+
+      const board = document.createElement("div");
+      board.className = "st-board";
+      board.innerHTML = `
+        <div class="st-inner" style="min-width:${count * 6}rem">
+          <div class="st-actors" style="grid-template-columns:${columns}">
+            ${data.actors.map((actor) => `<div class="st-actor">${inline(actor)}</div>`).join("")}
+          </div>
+          <div class="st-rows">
+            ${data.actors.map((_, i) => `<span class="st-lifeline" style="left:calc(${((i + 0.5) / count) * 100}% - 1px)"></span>`).join("")}
+            ${data.steps.map(stepRow).join("")}
+          </div>
+        </div>`;
+
+      const caption = document.createElement("p");
+      caption.className = "st-caption";
+      caption.setAttribute("aria-live", "polite");
+
+      const controls = document.createElement("div");
+      controls.className = "btn-row";
+      controls.innerHTML = `
+        <button type="button" class="btn st-back">Back</button>
+        <button type="button" class="btn btn-primary st-next">Next step</button>
+        <span class="counter st-count"></span>`;
+
+      root.append(board, caption, controls);
+
+      const rows = [...board.querySelectorAll(".st-row")];
+      const back = controls.querySelector(".st-back");
+      const next = controls.querySelector(".st-next");
+      const counter = controls.querySelector(".st-count");
+      const lastIndex = data.steps.length - 1;
+
+      const show = (index) => {
+        current = Math.max(0, Math.min(index, lastIndex));
+        rows.forEach((row, i) => {
+          row.classList.toggle("is-past", i < current);
+          row.classList.toggle("is-current", i === current);
+          row.classList.toggle("is-future", i > current);
+          row.setAttribute("aria-current", i === current ? "step" : "false");
+        });
+        caption.innerHTML = inline(data.steps[current].text);
+        counter.textContent = `Step ${current + 1} of ${data.steps.length}`;
+        if (current === 0 && document.activeElement === back) next.focus();
+        back.disabled = current === 0;
+        next.textContent = current === lastIndex ? "Start again" : "Next step";
+      };
+
+      rows.forEach((row) => row.addEventListener("click", () => show(Number(row.dataset.index))));
+      back.addEventListener("click", () => show(current - 1));
+      next.addEventListener("click", () => show(current === lastIndex ? 0 : current + 1));
+      root.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight") show(current + 1);
+        else if (event.key === "ArrowLeft") show(current - 1);
+        else return;
+        event.preventDefault();
+      });
+
+      show(0);
+    });
+  })();
+  /* /WIDGET stepper: JS */
+</script>

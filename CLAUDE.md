@@ -10,7 +10,9 @@ prefer plain language, and suggest commits often (conventional commits).
 
 ## What's here
 
-Two skills, each a self-contained folder under `skills/`:
+Twelve skills, each a self-contained folder under `skills/`. Every skill name starts with
+`rimakes-`, the user's namespace; the folder name and the `name:` in `SKILL.md` always match.
+`README.md` has a one-paragraph description of each. Two need extra care:
 
 - **`rimakes-product-spec`** — drives an in-depth conversation to define a product and produces a single,
   lossless `SPEC.md` (living product spec + per-feature build-status tracking + phased roadmap +
@@ -20,6 +22,13 @@ Two skills, each a self-contained folder under `skills/`:
 - **`rimakes-session-close`** — an end-of-session checklist skill (Next.js-oriented). Slash-command only
   (`disable-model-invocation: true` in its frontmatter → it runs only when the user types
   `/rimakes-session-close`, never auto-triggered).
+
+Kept out of this public repo on purpose (they stay local for now):
+
+- **`rimakes-unslop`**: a changed copy of `cursor/plugins`' unslop skill. That repo has no
+  license, so it cannot be republished here.
+- **`dev-patterns`**: its `resources/` holds source code from a private repo. The user will
+  decide later how to publish it. Its untracked folder under `skills/` is not committed.
 
 **These skills are carefully tuned and the user likes them as they are.** Don't restructure or
 "improve" them unprompted. Make surgical, requested changes and keep their shape.
@@ -48,8 +57,19 @@ rimakes-skills/
     ├── rimakes-product-spec/
     │   ├── SKILL.md
     │   └── assets/SPEC_TEMPLATE.md
-    └── rimakes-session-close/
-        └── SKILL.md
+    ├── rimakes-adversarial/
+    │   ├── SKILL.md
+    │   ├── reviewer-rules.md
+    │   └── angles/*.md         # one brief per review angle
+    ├── rimakes-feature-review/
+    │   ├── SKILL.md
+    │   ├── report-format.md
+    │   └── reviewers/*.md      # one brief per reviewer
+    ├── rimakes-teach-me/
+    │   ├── SKILL.md
+    │   └── widgets/            # base.css, template.html, one .html per widget
+    ├── rimakes-adr/            # SKILL.md + template.md
+    └── rimakes-<name>/         # the rest: a single SKILL.md each
 ```
 
 To add a new skill: `npx skills init <name>` (or create `skills/<name>/SKILL.md` by hand), then
@@ -84,9 +104,10 @@ The skill encodes a specific philosophy — respect it:
 
 ## Known follow-up
 
-The two skills currently also live installed at `~/.claude/skills/` (where they were originally
-authored). Once this repo is the source of truth, those copies should be reconciled (reinstall from
-the repo, or symlink) to avoid divergence. The user is aware and will handle this later.
+The skills were authored by hand in `~/.claude/skills/` and `~/.agents/skills/`, some under older
+names (`fix-issue`, `boilerplate-issue`, `feature-review`, `tracker`, `design-variants`,
+`product-spec`, `session-close`). The user plans to delete those copies and install from this repo
+with `npx skills add RicSala/rimakes-skills`, so there is one source.
 
 ## References
 

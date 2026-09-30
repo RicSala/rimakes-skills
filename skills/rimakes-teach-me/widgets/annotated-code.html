@@ -1,0 +1,151 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Annotated Code Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+<style>
+  /* WIDGET annotated-code: CSS */
+  .w-annotated-code .ac-code code {
+    white-space: pre;
+  }
+  .w-annotated-code .ac-mark {
+    font: inherit;
+    color: inherit;
+    padding: 0 0.1em;
+    border: 0;
+    border-bottom: 2px dotted var(--accent);
+    border-radius: 3px 3px 0 0;
+    background: var(--accent-soft);
+    cursor: pointer;
+  }
+  .w-annotated-code .ac-mark[aria-pressed="true"] {
+    background: var(--mark);
+    border-bottom-style: solid;
+  }
+  .w-annotated-code .ac-number {
+    font-family: var(--font-body);
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--accent);
+    vertical-align: super;
+    margin-left: 0.15em;
+  }
+  .w-annotated-code .ac-note {
+    display: grid;
+    gap: 0.35rem;
+    min-height: 5.5em;
+  }
+  /* /WIDGET annotated-code: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET annotated-code: HTML -->
+  <div class="widget w-annotated-code" data-widget="annotated-code">
+    <div class="widget-head">
+      <p class="widget-label">Tap the marked parts</p>
+      <h3 class="widget-title">A webhook route, part by part</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "lang": "typescript",
+        "code": "export async function POST(req: Request) {\n  const body = await req.text()\n  const signature = req.headers.get(\"stripe-signature\")\n  const event = stripe.webhooks.constructEvent(body, signature, secret)\n\n  const seen = await db.webhookEvent.findUnique({ where: { id: event.id } })\n  if (seen) return new Response(null, { status: 200 })\n\n  await db.$transaction([\n    applyEvent(event),\n    db.webhookEvent.create({ data: { id: event.id } })\n  ])\n  return new Response(null, { status: 200 })\n}",
+        "notes": [
+          {
+            "match": "req.text()",
+            "text": "Read the body as text, not as JSON. Stripe signs the exact bytes it sent. Parsing the JSON and turning it back into text can change them."
+          },
+          {
+            "match": "constructEvent",
+            "text": "Checks the signature, then parses the event. It throws when the signature does not match, so no line below runs for a fake request."
+          },
+          {
+            "match": "if (seen) return",
+            "text": "A second copy of an event you already handled gets a 200 and no work. Stripe then stops sending it."
+          },
+          {
+            "match": "db.$transaction",
+            "text": "The change and the event id are saved together. If two copies arrive at the same moment, both can pass the `seen` check, but the event id is unique, so the second `create` fails and its whole transaction is undone."
+          }
+        ]
+      }
+    </script>
+  </div>
+  <!-- /WIDGET annotated-code: HTML -->
+</main>
+
+<script>
+  /* WIDGET annotated-code: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+    const hl = (text, lang) =>
+      window.hljs?.getLanguage(lang) ? window.hljs.highlight(text, { language: lang, ignoreIllegals: true }).value : esc(text);
+
+    document.querySelectorAll('[data-widget="annotated-code"]').forEach((root) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const lang = data.lang || "typescript";
+      const notes = data.notes
+        .map((note) => ({ ...note, at: data.code.indexOf(note.match) }))
+        .filter((note) => {
+          if (note.at < 0) console.warn(`annotated-code: "${note.match}" is not in the code`);
+          return note.at >= 0;
+        })
+        .sort((a, b) => a.at - b.at);
+      let current = 0;
+
+      let html = "";
+      let position = 0;
+      notes.forEach((note, i) => {
+        html += hl(data.code.slice(position, note.at), lang);
+        html += `<button type="button" class="ac-mark" data-i="${i}" aria-pressed="false">${esc(note.match)}<span class="ac-number">${i + 1}</span></button>`;
+        position = note.at + note.match.length;
+      });
+      html += hl(data.code.slice(position), lang);
+
+      const code = document.createElement("pre");
+      code.className = "ac-code";
+      code.innerHTML = `<code>${html}</code>`;
+
+      const panel = document.createElement("div");
+      panel.className = "ac-note";
+      panel.setAttribute("aria-live", "polite");
+
+      const controls = document.createElement("div");
+      controls.className = "btn-row";
+      controls.innerHTML = `
+        <button type="button" class="btn ac-back">Back</button>
+        <button type="button" class="btn btn-primary ac-next">Next part</button>
+        <span class="counter ac-count"></span>`;
+
+      root.append(code, panel, controls);
+
+      const marks = [...code.querySelectorAll(".ac-mark")];
+      const back = controls.querySelector(".ac-back");
+      const next = controls.querySelector(".ac-next");
+      const counter = controls.querySelector(".ac-count");
+      const lastIndex = notes.length - 1;
+
+      const show = (index) => {
+        current = Math.max(0, Math.min(index, lastIndex));
+        marks.forEach((mark, i) => mark.setAttribute("aria-pressed", String(i === current)));
+        panel.innerHTML = `<p class="eyebrow">${current + 1}. <code>${esc(notes[current].match)}</code></p><p>${inline(notes[current].text)}</p>`;
+        counter.textContent = `Part ${current + 1} of ${notes.length}`;
+        if (current === 0 && document.activeElement === back) next.focus();
+        back.disabled = current === 0;
+        next.textContent = current === lastIndex ? "Start again" : "Next part";
+      };
+
+      marks.forEach((mark) => mark.addEventListener("click", () => show(Number(mark.dataset.i))));
+      back.addEventListener("click", () => show(current - 1));
+      next.addEventListener("click", () => show(current === lastIndex ? 0 : current + 1));
+
+      if (notes.length) show(0);
+    });
+  })();
+  /* /WIDGET annotated-code: JS */
+</script>

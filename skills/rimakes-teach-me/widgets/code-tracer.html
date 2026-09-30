@@ -1,0 +1,197 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Code Tracer Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+<style>
+  /* WIDGET code-tracer: CSS */
+  .w-code-tracer {
+    container-type: inline-size;
+  }
+  .w-code-tracer .ct-grid {
+    display: grid;
+    gap: 1rem;
+  }
+  @container (min-width: 36rem) {
+    .w-code-tracer .ct-grid {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      align-items: start;
+    }
+  }
+  .w-code-tracer .ct-grid > * {
+    min-width: 0;
+  }
+  .w-code-tracer .ct-code {
+    padding-inline: 0;
+  }
+  .w-code-tracer .ct-code code {
+    display: grid;
+    min-width: max-content;
+  }
+  .w-code-tracer .ct-line {
+    padding-inline: 0.75rem;
+    white-space: pre;
+  }
+  .w-code-tracer .ct-line.is-current {
+    background: var(--mark);
+  }
+  .w-code-tracer .ct-num {
+    display: inline-block;
+    width: 2ch;
+    margin-right: 1.25ch;
+    text-align: right;
+    color: var(--muted);
+    user-select: none;
+  }
+  .w-code-tracer .ct-vars {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .w-code-tracer .ct-vars caption {
+    text-align: left;
+    padding-bottom: 0.35rem;
+  }
+  .w-code-tracer .ct-vars th,
+  .w-code-tracer .ct-vars td {
+    text-align: left;
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  .w-code-tracer .ct-vars td {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .w-code-tracer .ct-vars .is-changed {
+    background: var(--accent-soft);
+  }
+  .w-code-tracer .ct-vars .is-gone {
+    color: var(--muted);
+  }
+  .w-code-tracer .ct-note {
+    min-height: 3.2em;
+  }
+  /* /WIDGET code-tracer: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET code-tracer: HTML -->
+  <div class="widget w-code-tracer" data-widget="code-tracer">
+    <div class="widget-head">
+      <p class="widget-label">Run it line by line</p>
+      <h3 class="widget-title">How the invoice total is computed</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "lang": "typescript",
+        "call": "invoiceTotal([{ price: 1250, qty: 2 }, { price: 499, qty: 1 }], \"SAVE10\")",
+        "code": "function invoiceTotal(lines, coupon) {\n  let total = 0\n  for (const line of lines) {\n    total += line.price * line.qty\n  }\n  if (coupon === \"SAVE10\") {\n    total = total * 0.9\n  }\n  return Math.round(total)\n}",
+        "steps": [
+          { "line": 2, "vars": { "total": "0" }, "note": "`total` starts at 0. Prices are in cents, so 1250 means 12.50." },
+          { "line": 3, "vars": { "total": "0", "line": "{ price: 1250, qty: 2 }" }, "note": "The loop takes the first line of the invoice." },
+          { "line": 4, "vars": { "total": "2500", "line": "{ price: 1250, qty: 2 }" }, "note": "1250 × 2 = 2500 is added to `total`." },
+          { "line": 3, "vars": { "total": "2500", "line": "{ price: 499, qty: 1 }" }, "note": "The loop takes the second line." },
+          { "line": 4, "vars": { "total": "2999", "line": "{ price: 499, qty: 1 }" }, "note": "499 × 1 = 499 is added. There are no more lines, so the loop ends." },
+          { "line": 6, "vars": { "total": "2999" }, "note": "The coupon is `SAVE10`, so the check is true." },
+          { "line": 7, "vars": { "total": "2699.1" }, "note": "10% off gives 2699.1. That is not a whole number of cents." },
+          { "line": 9, "vars": { "total": "2699.1" }, "returns": "2699", "note": "`Math.round` makes it 2699 cents, which is 26.99." }
+        ]
+      }
+    </script>
+  </div>
+  <!-- /WIDGET code-tracer: HTML -->
+</main>
+
+<script>
+  /* WIDGET code-tracer: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+    const hl = (text, lang) =>
+      window.hljs?.getLanguage(lang) ? window.hljs.highlight(text, { language: lang, ignoreIllegals: true }).value : esc(text);
+
+    document.querySelectorAll('[data-widget="code-tracer"]').forEach((root) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const names = [...new Set(data.steps.flatMap((step) => Object.keys(step.vars)))];
+      const lang = data.lang || "typescript";
+      let current = 0;
+
+      const body = document.createElement("div");
+      body.className = "ct-grid";
+      body.innerHTML = `
+        <pre class="ct-code"><code>${data.code
+          .split("\n")
+          .map((text, i) => `<span class="ct-line"><span class="ct-num" aria-hidden="true">${i + 1}</span>${hl(text, lang) || " "}</span>`)
+          .join("")}</code></pre>
+        <div>
+          <table class="ct-vars">
+            <caption class="eyebrow">Values right now</caption>
+            <thead><tr><th scope="col">Name</th><th scope="col">Value</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>`;
+
+      const call = document.createElement("p");
+      call.innerHTML = `Call: <code>${esc(data.call)}</code>`;
+
+      const note = document.createElement("p");
+      note.className = "ct-note";
+      note.setAttribute("aria-live", "polite");
+
+      const controls = document.createElement("div");
+      controls.className = "btn-row";
+      controls.innerHTML = `
+        <button type="button" class="btn ct-back">Back</button>
+        <button type="button" class="btn btn-primary ct-next">Next line</button>
+        <span class="counter ct-count"></span>`;
+
+      root.append(...(data.call ? [call] : []), body, note, controls);
+
+      const lines = [...body.querySelectorAll(".ct-line")];
+      const tbody = body.querySelector("tbody");
+      const back = controls.querySelector(".ct-back");
+      const next = controls.querySelector(".ct-next");
+      const counter = controls.querySelector(".ct-count");
+      const lastIndex = data.steps.length - 1;
+
+      const show = (index) => {
+        current = Math.max(0, Math.min(index, lastIndex));
+        const step = data.steps[current];
+        const before = current > 0 ? data.steps[current - 1].vars : {};
+        lines.forEach((line, i) => line.classList.toggle("is-current", i + 1 === step.line));
+        const rows = names.map((name) => {
+          if (!(name in step.vars)) return `<tr class="is-gone"><th scope="row">${esc(name)}</th><td>not in scope</td></tr>`;
+          const changed = step.vars[name] !== before[name];
+          return `<tr class="${changed ? "is-changed" : ""}"><th scope="row">${esc(name)}</th>
+                    <td>${esc(step.vars[name])}${changed ? '<span class="sr-only"> (changed)</span>' : ""}</td></tr>`;
+        });
+        if (step.returns !== undefined) rows.push(`<tr class="is-changed"><th scope="row">returns</th><td>${esc(step.returns)}</td></tr>`);
+        tbody.innerHTML = rows.join("");
+        note.innerHTML = inline(step.note);
+        counter.textContent = `Step ${current + 1} of ${data.steps.length} · line ${step.line}`;
+        if (current === 0 && document.activeElement === back) next.focus();
+        back.disabled = current === 0;
+        next.textContent = current === lastIndex ? "Start again" : "Next line";
+      };
+
+      back.addEventListener("click", () => show(current - 1));
+      next.addEventListener("click", () => show(current === lastIndex ? 0 : current + 1));
+      root.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight") show(current + 1);
+        else if (event.key === "ArrowLeft") show(current - 1);
+        else return;
+        event.preventDefault();
+      });
+
+      show(0);
+    });
+  })();
+  /* /WIDGET code-tracer: JS */
+</script>

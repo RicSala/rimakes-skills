@@ -1,0 +1,228 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Freestyle Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+
+<!--
+  A freestyle widget is one you write for the case at hand, when no stock
+  widget shows the idea well. This sample is one such widget: a query-cache
+  board. Copy its SHAPE, not its content:
+
+  - root: <div class="widget w-<name>" data-widget="freestyle" data-name="<name>">
+  - the data in <script type="application/json" class="w-data">
+  - one JS block that finds every root with that data-name
+  - a class prefix of its own (here `cb-`) so it never clashes with another widget
+  - colors and fonts only from the tokens in base.css
+  - complete at rest: real content on load, never an empty box
+  - real buttons, keyboard access, aria-live on what changes
+  - works at 400px: anything wide scrolls inside the widget
+  - no library, no network, no storage
+-->
+
+<style>
+  /* WIDGET freestyle cache-board: CSS */
+  .w-cache-board .cb-entry {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--code-bg);
+  }
+  .w-cache-board .cb-key {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+  }
+  .w-cache-board .cb-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+  .w-cache-board .cb-fact {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    background: var(--surface);
+  }
+  .w-cache-board .cb-fact strong {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .w-cache-board .cb-fact span {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .w-cache-board .cb-readers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    min-height: 1.8rem;
+  }
+  .w-cache-board .cb-reader {
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .w-cache-board .cb-reader[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+  }
+  .w-cache-board .cb-log {
+    min-height: 3.2em;
+  }
+  .w-cache-board .cb-log .pill {
+    margin-right: 0.4rem;
+  }
+  /* /WIDGET freestyle cache-board: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET freestyle cache-board: HTML -->
+  <div class="widget w-cache-board" data-widget="freestyle" data-name="cache-board">
+    <div class="widget-head">
+      <p class="widget-label">Try it</p>
+      <h3 class="widget-title">One cache entry, several readers</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "key": "[\"auth\", \"getSession\"]",
+        "request": "GET /api/auth/get-session",
+        "staleTime": 30,
+        "readers": ["ObservabilityProvider", "SupportProvider", "AppSidebar"],
+        "note": "Tap a reader to mount or unmount it. The entry is created by the first reader and shared by the rest. After `staleTime`, a new reader still gets the old data, and a refetch runs in the background."
+      }
+    </script>
+  </div>
+  <!-- /WIDGET freestyle cache-board: HTML -->
+</main>
+
+<script>
+  /* WIDGET freestyle cache-board: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    document.querySelectorAll('[data-widget="freestyle"][data-name="cache-board"]').forEach((root) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const state = { status: "no entry", age: 0, requests: 0, readers: new Set() };
+      let last = { text: "No reader has mounted yet, so there is no entry for this key.", kind: "" };
+
+      const entry = document.createElement("div");
+      entry.className = "cb-entry";
+      entry.innerHTML = `
+        <div class="cb-key">${esc(data.key)}</div>
+        <div class="cb-facts">
+          <div class="cb-fact"><strong>Status</strong><span class="cb-status"></span></div>
+          <div class="cb-fact"><strong>Data age</strong><span class="cb-age"></span></div>
+          <div class="cb-fact"><strong>Requests sent</strong><span class="cb-requests"></span></div>
+        </div>
+        <div>
+          <p class="eyebrow">Readers (tap to mount or unmount)</p>
+          <div class="cb-readers">
+            ${data.readers.map((name, i) => `<button type="button" class="cb-reader" data-i="${i}" aria-pressed="false">${esc(name)}</button>`).join("")}
+          </div>
+        </div>`;
+
+      const log = document.createElement("p");
+      log.className = "cb-log";
+      log.setAttribute("aria-live", "polite");
+
+      const controls = document.createElement("div");
+      controls.className = "btn-row";
+      controls.innerHTML = `
+        <button type="button" class="btn btn-primary cb-arrive">Response arrives</button>
+        <button type="button" class="btn cb-wait">Wait 10 s</button>
+        <button type="button" class="btn cb-reset">Reset</button>`;
+
+      const note = document.createElement("p");
+      note.className = "muted";
+      note.innerHTML = data.note ? inline(data.note) : "";
+
+      root.append(entry, log, controls, ...(data.note ? [note] : []));
+
+      const arrive = controls.querySelector(".cb-arrive");
+      const render = () => {
+        entry.querySelector(".cb-status").textContent = state.status;
+        entry.querySelector(".cb-age").textContent = state.status === "success" ? `${state.age} s` : "–";
+        entry.querySelector(".cb-requests").textContent = String(state.requests);
+        entry.querySelectorAll(".cb-reader").forEach((button) => button.setAttribute("aria-pressed", String(state.readers.has(Number(button.dataset.i)))));
+        arrive.disabled = state.status !== "pending" && !state.refetching;
+        const pill = last.kind ? `<span class="pill ${last.kind === "good" ? "pill-good" : "pill-bad"}">${last.kind === "good" ? "No request" : "Request"}</span>` : "";
+        log.innerHTML = `${pill}${inline(last.text)}`;
+      };
+
+      const mount = (i) => {
+        const name = data.readers[i];
+        if (state.status === "no entry") {
+          state.status = "pending";
+          state.requests += 1;
+          last = { text: `\`${name}\` mounted. No entry for the key, so the cache created one and sent \`${data.request}\`.`, kind: "bad" };
+        } else if (state.status === "pending") {
+          last = { text: `\`${name}\` mounted. The entry exists and is already fetching, so it just subscribed.`, kind: "good" };
+        } else if (state.age > data.staleTime) {
+          state.requests += 1;
+          state.refetching = true;
+          last = { text: `\`${name}\` mounted. The data is ${state.age} s old, older than staleTime (${data.staleTime} s): it renders the old data at once, and the entry refetches in the background.`, kind: "bad" };
+        } else {
+          last = { text: `\`${name}\` mounted. The data is ${state.age} s old, fresh under staleTime (${data.staleTime} s): it renders the cached data and nothing is sent.`, kind: "good" };
+        }
+        state.readers.add(i);
+      };
+
+      const unmount = (i) => {
+        state.readers.delete(i);
+        last = {
+          text: state.readers.size
+            ? `\`${data.readers[i]}\` unmounted. ${state.readers.size} reader(s) left; the entry is untouched.`
+            : `\`${data.readers[i]}\` unmounted. No readers left. The entry stays in the cache for gcTime (5 min by default), so a reader that mounts soon gets the data at once.`,
+          kind: "",
+        };
+      };
+
+      entry.addEventListener("click", (event) => {
+        const button = event.target.closest(".cb-reader");
+        if (!button) return;
+        const i = Number(button.dataset.i);
+        state.readers.has(i) ? unmount(i) : mount(i);
+        render();
+      });
+      arrive.addEventListener("click", () => {
+        state.status = "success";
+        state.age = 0;
+        state.refetching = false;
+        last = { text: `The response landed in the entry: status \`success\`, data age 0 s. Every mounted reader re-rendered with the same object.`, kind: "" };
+        render();
+      });
+      controls.querySelector(".cb-wait").addEventListener("click", () => {
+        if (state.status === "success") state.age += 10;
+        last = { text: state.status === "success" ? `10 s passed. The data is now ${state.age} s old.` : "10 s passed. There is no data yet, so age does not apply.", kind: "" };
+        render();
+      });
+      controls.querySelector(".cb-reset").addEventListener("click", () => {
+        Object.assign(state, { status: "no entry", age: 0, requests: 0, refetching: false });
+        state.readers.clear();
+        last = { text: "Cache emptied.", kind: "" };
+        render();
+      });
+
+      render();
+    });
+  })();
+  /* /WIDGET freestyle cache-board: JS */
+</script>

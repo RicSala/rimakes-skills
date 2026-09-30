@@ -1,0 +1,221 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Chooser Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+
+<style>
+  /* WIDGET chooser: CSS */
+  .w-chooser .ch-groups {
+    display: grid;
+    gap: 0.9rem;
+  }
+  .w-chooser .ch-group {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .w-chooser .ch-group legend {
+    padding: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .w-chooser .ch-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .w-chooser .ch-option {
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .w-chooser .ch-option:hover {
+    border-color: var(--accent);
+  }
+  .w-chooser .ch-option[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+  }
+  .w-chooser .ch-result {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .w-chooser .ch-result th,
+  .w-chooser .ch-result td {
+    text-align: left;
+    padding: 0.45rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  .w-chooser .ch-result th {
+    width: 9rem;
+    font-weight: 700;
+  }
+  .w-chooser .ch-result td {
+    overflow-wrap: anywhere;
+  }
+  .w-chooser .ch-result td.is-code {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .w-chooser .ch-summary {
+    display: grid;
+    gap: 0.4rem;
+  }
+  /* /WIDGET chooser: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET chooser: HTML -->
+  <div class="widget w-chooser" data-widget="chooser">
+    <div class="widget-head">
+      <p class="widget-label">Pick and see</p>
+      <h3 class="widget-title">What a cache lookup returns</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "model": "cacheLookup",
+        "choices": [
+          {
+            "id": "entry",
+            "label": "Is there an entry for the key?",
+            "options": [
+              { "value": "none", "label": "No entry" },
+              { "value": "fresh", "label": "Entry, 5 s old" },
+              { "value": "stale", "label": "Entry, 2 min old" }
+            ]
+          },
+          {
+            "id": "staleTime",
+            "label": "staleTime",
+            "options": [
+              { "value": "0", "label": "0 (default)" },
+              { "value": "30", "label": "30 s" }
+            ]
+          }
+        ],
+        "note": "The library sends a request only when the entry is missing or older than `staleTime`."
+      }
+    </script>
+  </div>
+  <!-- /WIDGET chooser: HTML -->
+</main>
+
+<script>
+  /* WIDGET chooser: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    /* One function per model. It gets the chosen value of every group by id
+       and returns rows for the table, one summary sentence and an optional
+       verdict ("good", "bad" or ""). A row with `code: true` is shown in
+       monospace. Add a model for a new topic. */
+    const MODELS = {
+      cacheLookup(values) {
+        const age = values.entry === "none" ? null : values.entry === "fresh" ? 5 : 120;
+        const staleTime = Number(values.staleTime);
+        const fetches = age === null || age > staleTime;
+        return {
+          rows: [
+            { label: "Shown right away", value: age === null ? "nothing (pending)" : "the cached data" },
+            { label: "Request sent", value: fetches ? "yes" : "no" },
+          ],
+          summary:
+            age === null
+              ? "No entry, so the hook creates one and sends a request."
+              : fetches
+                ? `The entry is ${age} s old and staleTime is ${staleTime} s, so the hook shows the old data and refetches in the background.`
+                : `The entry is ${age} s old and staleTime is ${staleTime} s, so the hook uses the cache and sends nothing.`,
+          verdict: fetches ? "" : "good",
+        };
+      },
+    };
+
+    document.querySelectorAll('[data-widget="chooser"]').forEach((root, widgetIndex) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      const model = MODELS[data.model];
+      const values = {};
+
+      const groups = document.createElement("div");
+      groups.className = "ch-groups";
+      groups.innerHTML = data.choices
+        .map((group) => {
+          values[group.id] = group.options[0].value;
+          return `<fieldset class="ch-group" data-id="${esc(group.id)}">
+                    <legend>${inline(group.label)}</legend>
+                    <div class="ch-options" role="group" aria-label="${esc(group.label)}">
+                      ${group.options
+                        .map(
+                          (option, i) =>
+                            `<button type="button" class="ch-option" data-value="${esc(option.value)}" aria-pressed="${i === 0}">${inline(option.label)}</button>`,
+                        )
+                        .join("")}
+                    </div>
+                  </fieldset>`;
+        })
+        .join("");
+
+      const table = document.createElement("table");
+      table.className = "ch-result";
+      table.innerHTML = `<caption class="sr-only">Result</caption><tbody></tbody>`;
+
+      const summary = document.createElement("div");
+      summary.className = "ch-summary";
+      summary.setAttribute("aria-live", "polite");
+
+      const note = document.createElement("p");
+      note.className = "muted";
+      note.innerHTML = data.note ? inline(data.note) : "";
+
+      root.append(groups, table, summary, ...(data.note ? [note] : []));
+
+      const update = () => {
+        const result = model(values);
+        table.querySelector("tbody").innerHTML = result.rows
+          .map(
+            (row) =>
+              `<tr><th scope="row">${inline(row.label)}</th><td class="${row.code ? "is-code" : ""}">${row.code ? esc(row.value) : inline(row.value)}</td></tr>`,
+          )
+          .join("");
+        const pill = result.verdict
+          ? `<span class="pill ${result.verdict === "good" ? "pill-good" : "pill-bad"}">${result.verdict === "good" ? "Fine" : "Problem"}</span>`
+          : "";
+        summary.innerHTML = `${pill}<p><strong>${inline(result.summary)}</strong></p>`;
+      };
+
+      if (!model) {
+        summary.textContent = `No model named "${data.model}" in MODELS.`;
+        return;
+      }
+
+      groups.addEventListener("click", (event) => {
+        const button = event.target.closest(".ch-option");
+        if (!button) return;
+        const group = button.closest(".ch-group");
+        group.querySelectorAll(".ch-option").forEach((option) => option.setAttribute("aria-pressed", "false"));
+        button.setAttribute("aria-pressed", "true");
+        values[group.dataset.id] = button.dataset.value;
+        update();
+      });
+
+      update();
+    });
+  })();
+  /* /WIDGET chooser: JS */
+</script>

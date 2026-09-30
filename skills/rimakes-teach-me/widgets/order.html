@@ -1,0 +1,169 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Order Widget</title>
+<!-- Preview only: the lines above and the two links. In a page, base.css is pasted into <style>. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" />
+<link rel="stylesheet" href="base.css" />
+
+<style>
+  /* WIDGET order: CSS */
+  .w-order .or-list {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .w-order .or-item {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.45rem 0.5rem 0.45rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  .w-order .or-item.is-right {
+    background: var(--good-soft);
+    border-color: var(--good);
+  }
+  .w-order .or-item.is-wrong {
+    background: var(--bad-soft);
+    border-color: var(--bad);
+  }
+  .w-order .or-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .w-order .or-moves {
+    display: flex;
+    gap: 0.3rem;
+  }
+  .w-order .or-moves .btn {
+    min-width: 2.5rem;
+    padding-inline: 0.5rem;
+  }
+  .w-order .or-message {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .w-order .or-message:empty {
+    display: none;
+  }
+  /* /WIDGET order: CSS */
+</style>
+
+<main class="page">
+  <!-- WIDGET order: HTML -->
+  <div class="widget w-order" data-widget="order">
+    <div class="widget-head">
+      <p class="widget-label">Put it in order</p>
+      <h3 class="widget-title">The steps of a safe webhook handler</h3>
+    </div>
+    <script type="application/json" class="w-data">
+      {
+        "items": [
+          "Read the raw body as text",
+          "Check the signature",
+          "Skip the event if its id was seen before",
+          "Save the change and the event id in one transaction",
+          "Answer 200"
+        ],
+        "explain": "The signature is computed over the exact body, so read it raw and check it before anything trusts it. Then skip repeats. Save the change and the id together, so a crash cannot save one without the other. Answer 200 last: a 200 tells Stripe the work is done."
+      }
+    </script>
+  </div>
+  <!-- /WIDGET order: HTML -->
+</main>
+
+<script>
+  /* WIDGET order: JS */
+  (() => {
+    const esc = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    const shuffled = (length, seedText) => {
+      let seed = [...seedText].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 7);
+      const random = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+      const order = [...Array(length).keys()];
+      for (let i = length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      if (order.every((value, i) => value === i)) order.push(order.shift());
+      return order;
+    };
+
+    document.querySelectorAll('[data-widget="order"]').forEach((root) => {
+      const data = JSON.parse(root.querySelector(".w-data").textContent);
+      let order = shuffled(data.items.length, data.items.join("|"));
+
+      const list = document.createElement("ol");
+      list.className = "or-list";
+
+      const controls = document.createElement("div");
+      controls.className = "btn-row";
+      controls.innerHTML = `
+        <button type="button" class="btn btn-primary or-check">Check my order</button>
+        <button type="button" class="btn or-answer">Show the answer</button>`;
+
+      const message = document.createElement("div");
+      message.className = "or-message";
+      message.setAttribute("aria-live", "polite");
+
+      root.append(list, controls, message);
+
+      const render = (marks = false) => {
+        list.innerHTML = order
+          .map((item, position) => {
+            const mark = marks ? (item === position ? " is-right" : " is-wrong") : "";
+            const text = esc(data.items[item]);
+            return `<li class="or-item${mark}" data-position="${position}">
+                      <span class="or-number">${position + 1}</span>
+                      <span>${inline(data.items[item])}</span>
+                      <span class="or-moves">
+                        <button type="button" class="btn or-up" aria-label="Move up: ${text}" ${position === 0 ? "disabled" : ""}>↑</button>
+                        <button type="button" class="btn or-down" aria-label="Move down: ${text}" ${position === order.length - 1 ? "disabled" : ""}>↓</button>
+                      </span>
+                    </li>`;
+          })
+          .join("");
+      };
+
+      list.addEventListener("click", (event) => {
+        const button = event.target.closest(".or-up, .or-down");
+        if (!button) return;
+        const from = Number(button.closest(".or-item").dataset.position);
+        const to = button.classList.contains("or-up") ? from - 1 : from + 1;
+        [order[from], order[to]] = [order[to], order[from]];
+        render();
+        message.innerHTML = "";
+        const moved = list.children[to];
+        const same = moved.querySelector(button.classList.contains("or-up") ? ".or-up" : ".or-down");
+        (same.disabled ? moved.querySelector(".or-up:not(:disabled), .or-down:not(:disabled)") : same)?.focus();
+      });
+
+      controls.querySelector(".or-check").addEventListener("click", () => {
+        const right = order.filter((item, position) => item === position).length;
+        render(true);
+        message.innerHTML =
+          right === order.length
+            ? `<span class="pill pill-good">All in order</span><p>${inline(data.explain || "")}</p>`
+            : `<span class="pill pill-bad">${right} of ${order.length} in the right place</span><p>Move the red ones and check again.</p>`;
+      });
+
+      controls.querySelector(".or-answer").addEventListener("click", () => {
+        order = [...order.keys()];
+        render(true);
+        message.innerHTML = `<span class="pill pill-good">The right order</span><p>${inline(data.explain || "")}</p>`;
+      });
+
+      render();
+    });
+  })();
+  /* /WIDGET order: JS */
+</script>
