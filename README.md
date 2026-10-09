@@ -81,7 +81,7 @@ is empty. Ships preview recipes in `previews/`.
 Files an idea, improvement or bug on the boilerplate the current project was started from. The
 boilerplate's repo comes from `.boilerplate.json` at the project root. Slash-command only.
 
-#### `rimakes-boilerplate-update`
+#### `rimakes-boilerplate`
 
 Pulls the latest boilerplate changes into a project started from it: one merge from the
 boilerplate's `upstream` remote, conflicts resolved by layer (the boilerplate owns `packages/`

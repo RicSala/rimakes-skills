@@ -1,11 +1,11 @@
 ---
-name: rimakes-boilerplate-update
+name: rimakes-boilerplate
 description: Pull the latest boilerplate changes into a project started from it. Merges the boilerplate's `upstream` remote, resolves conflicts by layer (the boilerplate owns `packages/` and `config/`, the product owns `composition/`, `features/` and `apps/`), runs the checks and bumps `commit` in `.boilerplate.json`. With `new <owner>/<name>`, starts a new project from the boilerplate instead, wired so later updates can land.
-argument-hint: "[new <owner>/<name>]"
+argument-hint: "[update | new <owner>/<name>]"
 disable-model-invocation: true
 ---
 
-# Boilerplate Update
+# Boilerplate
 
 A project is a clone of the boilerplate that kept its history. The project's
 `origin` is its own repo; the boilerplate is a second remote, `upstream`.
@@ -16,7 +16,7 @@ The merge stays cheap because of the layers. The boilerplate owns `packages/`,
 `apps/`. A file only conflicts when both sides changed it.
 
 Mode: with `new <owner>/<name>`, start a project (second half of this file).
-With no argument, pull updates into the current project.
+With `update` or no argument, pull updates into the current project.
 
 ## Pull updates
 
@@ -227,7 +227,7 @@ Write the `.gitattributes` lines from step 4 above, and run
 
 Tell the user, in three lines:
 
-- `/rimakes-boilerplate-update` brings later boilerplate changes in.
+- `/rimakes-boilerplate update` brings later boilerplate changes in.
 - Changing `packages/` or `config/` in the product is allowed, but each
   change there conflicts at every update that touches the same file. A
   change that is not specific to this product goes to the boilerplate
