@@ -1,6 +1,6 @@
 ---
 name: rimakes-boilerplate-issue
-description: File a bug, footgun, improvement or idea for the boilerplate the current project was started from, as a GitHub issue on the boilerplate's repo (named in `.boilerplate.json`). Use when work in a product runs into the boilerplate: code in `packages/` or `config/` that is wrong, a mistake the boilerplate let happen, something most products would need, or when the user says "report this to the boilerplate", "file it upstream", "this should be in the boilerplate".
+description: File a bug, footgun, improvement or idea for the boilerplate the current project was started from, as a GitHub issue on the boilerplate's repo (named in `.boilerplate.json`). Use when work in a product runs into the boilerplate, such as code in `packages/` or `config/` that is wrong, a mistake the boilerplate let happen, something most products would need, or when the user says "report this to the boilerplate", "file it upstream", "this should be in the boilerplate".
 ---
 
 # Boilerplate Issue
