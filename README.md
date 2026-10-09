@@ -86,6 +86,14 @@ fix in plan mode, fixes it after approval, and closes the issue.
 Files an idea, improvement or bug on the boilerplate the current project was started from. The
 boilerplate's repo comes from `.boilerplate.json` at the project root. Slash-command only.
 
+#### `rimakes-boilerplate-update`
+
+Pulls the latest boilerplate changes into a project started from it: one merge from the
+boilerplate's `upstream` remote, conflicts resolved by layer (the boilerplate owns `packages/`
+and `config/`, the product owns `composition/`, `features/` and `apps/`), checks run, and
+`commit` in `.boilerplate.json` bumped. `new <owner>/<name>` starts a project from the
+boilerplate, wired so later updates can land. Slash-command only.
+
 ### End a session
 
 #### `rimakes-session-close`
