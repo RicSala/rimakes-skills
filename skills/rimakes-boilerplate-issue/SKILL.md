@@ -1,15 +1,14 @@
 ---
 name: rimakes-boilerplate-issue
-description: File an improvement, idea, or bug for the boilerplate the current project was started from, as a GitHub issue on the boilerplate's repo. The repo comes from `.boilerplate.json` at the project root.
-disable-model-invocation: true
+description: File a bug, footgun, improvement or idea for the boilerplate the current project was started from, as a GitHub issue on the boilerplate's repo (named in `.boilerplate.json`). Use when work in a product runs into the boilerplate: code in `packages/` or `config/` that is wrong, a mistake the boilerplate let happen, something most products would need, or when the user says "report this to the boilerplate", "file it upstream", "this should be in the boilerplate".
 ---
 
 # Boilerplate Issue
 
 The user's projects start from a boilerplate repo, and its roadmap lives in
-that repo's GitHub issues. Capture the improvement the user described as an
-issue there: never as a local file, and never in the current project's
-issues.
+that repo's GitHub issues. Capture what the user described, or what you ran
+into, as an issue there: never as a local file, and never in the current
+project's issues. Show the draft first; posting to GitHub is the user's call.
 
 ## Steps
 
@@ -36,7 +35,8 @@ issues.
    include its diff (`git diff` or `git show <sha>`, trimmed to the relevant
    hunks) so porting it back is mechanical. If the request is too vague to
    write an issue a future session could act on, ask one or two short
-   questions first.
+   questions first. For a footgun, also answer: what would have stopped it?
+   That answer is the change to ask for.
 
 3. **Check for an existing issue**, so the roadmap does not collect
    duplicates:
@@ -52,13 +52,18 @@ issues.
 
 4. **Pick labels**, exactly one of each:
 
-   - Type: `bug` (something is broken) | `enhancement` (a concrete change) |
-     `idea` (a direction to explore, not yet actionable)
+   - Type: `bug` (boilerplate code does the wrong thing) | `footgun` (it
+     worked as designed but cost time: an easy mistake, a misleading error,
+     a missing guard, a rule AGENTS.md should state) | `enhancement` (a
+     concrete change most products would want) | `idea` (a direction to
+     explore, not yet actionable)
    - Priority: `priority: high` | `priority: medium` | `priority: low`,
      inferred from how much friction it caused; medium when unsure.
 
-5. **Create the issue.** Write the body to a temp file first (avoids shell
-   quoting problems), then:
+5. **Create the issue.** Show the title, the labels and the body in chat,
+   and file only after the user says yes: this skill may have started on
+   its own, and posting is theirs to decide. Write the body to a temp file
+   first (avoids shell quoting problems), then:
 
    ```bash
    gh issue create -R $REPO \
@@ -91,6 +96,15 @@ issues.
 6. **Report back** with the clickable issue URL, the title and the labels.
    If you commented on an existing issue instead, link it and say so.
 
+7. **Tag the local fix.** If the project patched the boilerplate's code,
+   the patch is a workaround on a dependency. Mark it in every file it
+   touches, so the next `/rimakes-boilerplate update` can drop it:
+
+   ```ts
+   // WORKAROUND $REPO#<n>: <what the boilerplate gets wrong>. Remove when
+   // the fix ships in the boilerplate and an update brings it in.
+   ```
+
 ## If GitHub is unreachable
 
 If `gh` fails (offline, auth expired), do not lose the note: save the body
@@ -104,6 +118,7 @@ gh issue create -R $REPO --title "<title>" --label "<type>" --label "priority: <
 ## Guardrails
 
 - File only on `$REPO`, never on the current project's repo.
+- Never post without the user's yes on the draft.
 - Do not create labels. If one is missing on the repo, file without it and
   say so.
 - Never edit or close existing issues; only comment.

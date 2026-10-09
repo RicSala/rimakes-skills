@@ -78,8 +78,10 @@ is empty. Ships preview recipes in `previews/`.
 
 #### `rimakes-boilerplate-issue`
 
-Files an idea, improvement or bug on the boilerplate the current project was started from. The
-boilerplate's repo comes from `.boilerplate.json` at the project root. Slash-command only.
+Files a bug, footgun, improvement or idea on the boilerplate the current project was started
+from, as an issue on the boilerplate's repo (named in `.boilerplate.json`). The agent starts it
+when work runs into the boilerplate, shows the draft, and posts after a yes. A local patch gets a
+`WORKAROUND` tag with the issue number so the next update can drop it.
 
 #### `rimakes-boilerplate`
 
