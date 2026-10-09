@@ -76,7 +76,7 @@ rimakes-skills/
 ```
 
 To add a new skill: `npx skills init <name>` (or create `skills/<name>/SKILL.md` by hand), then
-document it in `README.md`.
+document it in `README.md` and bump the count under "What's here".
 
 ## Design principles baked into `rimakes-product-spec` (understand before editing it)
 
@@ -105,12 +105,14 @@ The skill encodes a specific philosophy — respect it:
 - `npx skills list` — list installed
 - `npx skills init <name>` — scaffold a new skill
 
-## Known follow-up
+## Local install
 
-The skills were authored by hand in `~/.claude/skills/` and `~/.agents/skills/`, some under older
-names (`fix-issue`, `boilerplate-issue`, `feature-review`, `tracker`, `design-variants`,
-`product-spec`, `session-close`). The user plans to delete those copies and install from this repo
-with `npx skills add RicSala/rimakes-skills`, so there is one source.
+The user's machine installs from this repo with the skills CLI, Claude Code only:
+`npx skills add RicSala/rimakes-skills -s '*' -a claude-code -g -y` (done 2026-10-09). Each skill is a
+copy under `~/.claude/skills/<name>/` that records this repo as its source, so `npx skills update -g -y`
+refreshes it. The loop after changing a skill: commit, push, `npx skills update -g -y`. Never edit the
+copies in `~/.claude/skills/`; a brand-new skill needs one `npx skills add ... -s <name>` first.
+`rimakes-unslop` and `dev-patterns` are local-only and are not installed from here.
 
 ## References
 
