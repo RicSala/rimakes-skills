@@ -102,6 +102,15 @@ An end-of-session checklist for a coding session (Next.js-oriented): syncs proje
 nothing is left half-finished or inconsistent, and gives a plain-language verdict on whether it's
 safe to stop. Slash-command only (`/rimakes-session-close`).
 
+### Make skills
+
+#### `rimakes-skill-new`
+
+Creates a new skill in this catalog from a name and a one-line purpose, or from a workflow just
+done in the conversation. Writes the `SKILL.md` with the house conventions, documents it here,
+commits, pushes and installs it with the skills CLI so it works right away. Also the way to
+change an existing skill.
+
 ## Install
 
 ```bash
