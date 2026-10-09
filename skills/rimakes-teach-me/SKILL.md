@@ -49,9 +49,29 @@ In this order:
    Only when the topic comes from the user's repo.
 5. **Good to know**: things that are true but not needed to act. Short.
 
-**Pictures.** Use one when the idea has a shape: parts that talk to each
-other, a flow, layers, a timeline. Mermaid renders on its own in an
-artifact. Load the `artifact-diagramming` skill before you draw an SVG.
+**Diagrams.** Draw one whenever the idea has a shape: parts that talk to
+each other, a flow, layers, a timeline, a tree, a cache with entries, a
+request and its response. A reader sees a shape faster than they read it,
+so a page about a system with more than two parts has at least one diagram,
+and a section that describes a structure in prose gets one too. Make them
+visually nice, not just correct:
+
+- Draw the real thing: the real component names, keys, paths and values
+  from the user's code, not "Service A" and "Service B".
+- One idea per diagram. Five to nine boxes. Split a bigger one.
+- Every box and arrow has a short label. An arrow says what travels on it.
+- Colors and fonts come from the page's tokens, so the diagram reads in
+  both themes. Highlight the one part the section is about with the accent;
+  keep the rest quiet.
+- Put it in a `.diagram` box with a `<p class="diagram-caption">` under
+  it: one line that says what to look at.
+
+Mermaid renders on its own in an artifact and is fine for a flowchart or a
+sequence. When the layout matters (a timeline with real proportions, boxes
+inside boxes, a picture of a data structure), draw an SVG by hand: load the
+`artifact-diagramming` skill first, and follow it. If a diagram would be
+better as something the reader can act on, make it a freestyle widget
+instead (see below).
 
 **Widgets.** Use one when doing something teaches more than reading about
 it: seeing steps in order, moving a slider and watching the result,
@@ -91,7 +111,7 @@ page, not zero. `widgets/README.md` ("Freestyle") has the contract and
   keep the token names: every widget reads them.
 - Keep the template's page parts: the highlight.js script tag, the
   `<nav class="toc">` and the `PAGE: JS` block. They give the page its
-  "On this page" list, the theme switch and code highlighting. Every
+  "On this page" list, the theme switch, focus mode and code highlighting. Every
   `section.lesson` needs an `id` and an `h2`, or it is missing from the
   list.
 - Code in prose goes in `<pre><code class="language-ts">` (or another

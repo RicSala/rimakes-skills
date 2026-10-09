@@ -36,6 +36,13 @@ of them, but readers do.
 - **Theme switch.** The `Theme: system / light / dark` button in that nav
   sets `data-theme` on the root and remembers the choice in `localStorage`
   (wrapped in try/catch). `base.css` already styles both themes.
+- **Focus mode.** The `Focus` button in that nav hides the nav, the theme
+  switch and the list, and asks the browser for fullscreen (allowed from a
+  click on desktop; on phones the request may be refused and only the nav
+  hides). The button stays as a small pill in the top-right corner. `Esc`,
+  the pill, or leaving fullscreen ends focus mode. `Cmd+Shift+F`
+  (`Ctrl+Shift+F` outside macOS) toggles it while the page has focus.
+  Plain `Cmd+F` stays the browser's find-in-page.
 - **Code highlighting.** A pinned highlight.js script from cdnjs
   (`11.11.1`, 36 languages, `typescript` included). The page script
   highlights every `<pre><code class="language-…">` in prose. Widgets that

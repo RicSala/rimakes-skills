@@ -12,7 +12,10 @@
 <nav class="toc" aria-label="On this page">
   <div class="toc-bar">
     <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="toc-list">On this page</button>
-    <button type="button" class="theme-toggle" aria-live="polite">Theme: system</button>
+    <span class="toc-bar">
+      <button type="button" class="theme-toggle" aria-live="polite">Theme: system</button>
+      <button type="button" class="focus-toggle" aria-pressed="false" title="Only the content, full screen. Cmd+Shift+F or Ctrl+Shift+F toggles it. Esc leaves.">Focus</button>
+    </span>
   </div>
   <ol class="toc-list" id="toc-list"></ol>
 </nav>
@@ -62,7 +65,7 @@
 
 <script>
   /* PAGE: JS. Keep this block: it builds the "On this page" list, marks the section in view,
-     runs the theme switch, and highlights <pre><code class="language-…"> in prose. */
+     runs the theme switch and focus mode, and highlights <pre><code class="language-…"> in prose. */
   (() => {
     const nav = document.querySelector(".toc");
     const list = document.getElementById("toc-list");
@@ -123,6 +126,34 @@
         try {
           localStorage.setItem("teach-theme", current);
         } catch {}
+      });
+    }
+
+    const focus = nav?.querySelector(".focus-toggle");
+    if (focus) {
+      const root = document.documentElement;
+      const setFocus = (on) => {
+        root.classList.toggle("is-focus", on);
+        focus.textContent = on ? "Exit focus (Esc)" : "Focus";
+        focus.setAttribute("aria-pressed", String(on));
+      };
+      focus.addEventListener("click", async () => {
+        const on = !root.classList.contains("is-focus");
+        setFocus(on);
+        try {
+          if (on && !document.fullscreenElement) await root.requestFullscreen?.();
+          else if (!on && document.fullscreenElement) await document.exitFullscreen?.();
+        } catch {}
+      });
+      document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement) setFocus(false);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && root.classList.contains("is-focus")) setFocus(false);
+        else if ((event.metaKey || event.ctrlKey) && event.shiftKey && !event.altKey && event.key.toLowerCase() === "f") {
+          event.preventDefault();
+          focus.click();
+        }
       });
     }
 

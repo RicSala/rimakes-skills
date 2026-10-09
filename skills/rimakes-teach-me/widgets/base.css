@@ -220,6 +220,11 @@ pre code {
   height: auto;
 }
 
+.diagram-caption {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
 /* Syntax highlighting: highlight.js classes, colored only through tokens.
    Widgets call `hl(text, lang)`; prose uses <pre><code class="language-ts">. */
 .hljs-keyword,
@@ -337,6 +342,48 @@ pre code {
   border-left-color: var(--accent);
   font-weight: 700;
 }
+/* Focus mode: only the content stays. The root gets .is-focus; the page
+   script also asks for fullscreen when the browser allows it. The Focus
+   button stays as a small pill in the corner, so touch users can leave. */
+.focus-toggle {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.focus-toggle:hover {
+  border-color: var(--accent);
+}
+.is-focus .toc {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  right: 0.75rem;
+  left: auto;
+  width: auto;
+  max-height: none;
+  overflow: visible;
+  z-index: 2;
+}
+.is-focus .toc-toggle,
+.is-focus .theme-toggle,
+.is-focus .toc-list {
+  display: none !important;
+}
+.is-focus .focus-toggle {
+  border-radius: 999px;
+  opacity: 0.6;
+}
+.is-focus .focus-toggle:hover,
+.is-focus .focus-toggle:focus-visible {
+  opacity: 1;
+}
+
 @media (min-width: 78rem) {
   .toc {
     position: fixed;
