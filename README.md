@@ -76,11 +76,6 @@ Designs and builds empty states for React and Next.js screens. It finds why the 
 action, adds a preview, and makes sure the empty state never shows before the app knows the list
 is empty. Ships preview recipes in `previews/`.
 
-#### `rimakes-boilerplate-fix`
-
-Picks an open GitHub issue in the current repo, checks its claims against the code, plans the
-fix in plan mode, fixes it after approval, and closes the issue.
-
 #### `rimakes-boilerplate-issue`
 
 Files an idea, improvement or bug on the boilerplate the current project was started from. The
