@@ -1,10 +1,10 @@
 ---
-name: rimakes-skill-new
-description: Create a new skill in the user's rimakes-skills catalog, from a name and a one-line purpose, or from a workflow just done in the conversation. Writes skills/rimakes-<name>/SKILL.md in the repo with the house conventions, documents it in README.md and CLAUDE.md, commits, pushes and installs it with the skills CLI so it works right away. Use when the user says "make this a skill", "create a skill", "turn this into a skill", "new rimakes skill", or invokes /rimakes-skill-new. Also covers changing an existing rimakes skill.
-argument-hint: "<name> [what it does]"
+name: rimakes-skill
+description: Create or change a skill in the user's rimakes-skills catalog. `new <name> [what it does]` writes skills/rimakes-<name>/SKILL.md with the house conventions, from the request or from a workflow just done in the conversation. `update <name> [the change]` edits an existing skill and keeps its shape. Both document the skill in README.md and CLAUDE.md, commit, push, and install or refresh it with the skills CLI so it works right away. Use when the user says "make this a skill", "create a skill", "turn this into a skill", "update the X skill", "change the X skill", "the X skill should…", or invokes /rimakes-skill.
+argument-hint: "[new <name> [what it does] | update <name> [the change]]"
 ---
 
-# New Rimakes Skill
+# Rimakes Skill
 
 The user's skills live in one catalog repo: `~/Developer/rimakes-skills`
 (clone `git@github.com:RicSala/rimakes-skills.git` there if it is missing).
@@ -12,13 +12,19 @@ One folder per skill, `skills/rimakes-<name>/SKILL.md`. The machine installs
 them from GitHub with the skills CLI into `~/.claude/skills/`. Those installed
 copies are never edited; the repo is the only source.
 
-The request: $ARGUMENTS. The first word is the name, the rest is what the skill
-does. Take everything else from the conversation. When the user just did a
-workflow and says "make this a skill", the steps, the commands, the
-corrections they made and the shape of the output are all in the conversation:
-use them.
+The request: $ARGUMENTS.
 
-## Steps
+- `new <name> [what it does]`: create a skill. Go to **New skill**.
+- `update <name> [the change]`: change one that exists. Go to **Update a
+  skill**.
+- No mode word: it is `update` when `<name>` matches a folder in `skills/`,
+  else `new`. No name at all: take it from the conversation, or ask.
+
+Take everything else from the conversation. When the user just did a
+workflow and says "make this a skill", the steps, the commands, the
+corrections they made and the shape of the output are all there: use them.
+
+## New skill
 
 ### 1. Pin down the skill
 
@@ -44,7 +50,8 @@ ls ~/Developer/rimakes-skills/skills/
 npx -y skills@latest list -g
 ```
 
-If a close skill exists, change that one (step 7) instead of adding a twin.
+If a close skill exists, switch to **Update a skill** instead of adding a
+twin.
 
 ### 2. Write `SKILL.md`
 
@@ -99,46 +106,65 @@ every step that needs context the file does not give.
 - `CLAUDE.md`: bump the count in "What's here". Add the folder to the layout
   tree only when it has files beyond `SKILL.md`.
 
-### 4. Commit and push
+Then go to **Ship it**.
+
+## Update a skill
+
+### 1. Find it and read it
+
+The skill is `skills/rimakes-<name>/` in the repo. If it is not there, say
+so and offer `new`. Read the whole `SKILL.md` and every bundled file before
+changing anything.
+
+### 2. Make the change, and only that change
+
+The user tunes these skills by hand and likes them as they are. Keep the
+shape, the voice and the length. No restructuring, no "improvements" beyond
+the ask. When the description changes, it stays a trigger: what the skill
+does, and when. When the name changes, `git mv` the folder and change the
+`name:` field together; the two are always the same.
+
+### 3. Keep the docs true
+
+- The `README.md` paragraph, when what the skill does changed, or its name.
+- The `CLAUDE.md` note, when that skill has one (`rimakes-product-spec`
+  and `rimakes-session-close` do).
+
+Then go to **Ship it**.
+
+## Ship it
 
 ```bash
 cd ~/Developer/rimakes-skills
 git add skills/rimakes-<name> README.md CLAUDE.md
-git commit -m "feat: add rimakes-<name>"
+git commit -m "feat: add rimakes-<name>"            # new
+git commit -m "feat(<name>): <what changed>"        # update; fix(<name>) for a correction
 git push origin main
 ```
 
 Add only this skill's folder and the two docs. Never add untracked
 local-only folders such as `skills/dev-patterns/`.
 
-### 5. Install it
+Install a new skill, or refresh a changed one:
 
 ```bash
-npx -y skills@latest add RicSala/rimakes-skills -s rimakes-<name> -a claude-code -g -y
-test -f ~/.claude/skills/rimakes-<name>/SKILL.md && echo installed
+npx -y skills@latest add RicSala/rimakes-skills -s rimakes-<name> -a claude-code -g -y   # new
+npx -y skills@latest update -g -y                                                        # update
+test -f ~/.claude/skills/rimakes-<name>/SKILL.md && echo ok
 ```
 
-Then tell the user to run `/reload-skills` in Claude Code so the new slash
-command shows up in this session.
+When a skill was renamed, remove the old copy first:
+`npx -y skills@latest remove rimakes-<old-name> -g -y`.
 
-### 6. Report
+Then tell the user to run `/reload-skills` in Claude Code so this session
+sees the change.
 
-- The path of the new `SKILL.md`, as a clickable link.
+## Report
+
+- The path of the `SKILL.md`, as a clickable link.
 - How to call it: `/rimakes-<name> <args>`, or the phrases that trigger it.
-- What it does, in one line.
+- What it does, or what changed, in one line.
 - The `/reload-skills` reminder.
-
-### 7. Changing an existing skill
-
-Edit it in the repo, never in `~/.claude/skills/`. Keep its shape: the user
-tunes these by hand and likes them as they are, so make the requested change
-and nothing more. Then:
-
-```bash
-git commit -am "fix(<name>): <what changed>"
-git push origin main
-npx -y skills@latest update -g -y
-```
 
 ## Guardrails
 

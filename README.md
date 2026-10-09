@@ -104,12 +104,12 @@ safe to stop. Slash-command only (`/rimakes-session-close`).
 
 ### Make skills
 
-#### `rimakes-skill-new`
+#### `rimakes-skill`
 
-Creates a new skill in this catalog from a name and a one-line purpose, or from a workflow just
-done in the conversation. Writes the `SKILL.md` with the house conventions, documents it here,
-commits, pushes and installs it with the skills CLI so it works right away. Also the way to
-change an existing skill.
+Creates or changes a skill in this catalog. `new <name>` writes the `SKILL.md` with the house
+conventions, from the request or from a workflow just done in the conversation. `update <name>`
+edits an existing skill and keeps its shape. Both document the skill here, commit, push, and
+install or refresh it with the skills CLI so it works right away.
 
 ## Install
 
