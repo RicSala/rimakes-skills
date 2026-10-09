@@ -69,6 +69,13 @@ edits. Slash-command only.
 Scaffolds three designs for a component or page with an in-browser switcher (`?v=1|2|3`), then
 collapses back to the one you pick.
 
+#### `rimakes-empty-states`
+
+Designs and builds empty states for React and Next.js screens. It finds why the screen is empty
+(first use, no results, all done, no permission), writes the title, the sentence and the one
+action, adds a preview, and makes sure the empty state never shows before the app knows the list
+is empty. Ships preview recipes in `previews/`.
+
 #### `rimakes-boilerplate-fix`
 
 Picks an open GitHub issue in the current repo, checks its claims against the code, plans the

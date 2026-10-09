@@ -10,7 +10,7 @@ prefer plain language, and suggest commits often (conventional commits).
 
 ## What's here
 
-Twelve skills, each a self-contained folder under `skills/`. Every skill name starts with
+Thirteen skills, each a self-contained folder under `skills/`. Every skill name starts with
 `rimakes-`, the user's namespace; the folder name and the `name:` in `SKILL.md` always match.
 `README.md` has a one-paragraph description of each. Two need extra care:
 
@@ -68,6 +68,9 @@ rimakes-skills/
     ├── rimakes-teach-me/
     │   ├── SKILL.md
     │   └── widgets/            # base.css, template.html, one .html per widget
+    ├── rimakes-empty-states/
+    │   ├── SKILL.md
+    │   └── previews/*.md       # one recipe per kind of preview
     ├── rimakes-adr/            # SKILL.md + template.md
     └── rimakes-<name>/         # the rest: a single SKILL.md each
 ```
