@@ -101,7 +101,7 @@ Resolve conflicts by what the path is:
 | --- | --- |
 | `pnpm-lock.yaml` | Never merge by hand. `git checkout --theirs pnpm-lock.yaml`; `pnpm install` in step 5 rewrites it. |
 | `README.md`, `composition/server/src/config/**` | The product's version: `git checkout --ours <path>`. |
-| `AGENTS.md` | Keep the product's text (`git checkout --ours AGENTS.md`), then read upstream's change (`git diff $COMMIT upstream/main -- AGENTS.md`) and carry over by hand the rules that apply to the product. |
+| `AGENTS.md` | Resolve only the conflict blocks: keep the product's side where it describes the product (its features, its settings). Git already merged upstream's other rule changes; `git checkout --ours AGENTS.md` would drop them. |
 | A path the product deleted (`features/todo`, `apps/mobile`, …): modify/delete conflicts, or new files from upstream | Keep it deleted: `git rm -rf --quiet <path>`. `-f` is needed because upstream's new files are staged. |
 | `packages/**`, `config/**` | Take upstream: `git checkout --theirs <path>`. If the product changed the file, that change belongs in the boilerplate. Tell the user, keep upstream, and offer `/rimakes-boilerplate-issue` to send the change upstream. Carry it over by hand only if the user asks, and say it will conflict again. |
 | `composition/**` | The product's wiring wins. Bring in upstream's new wiring only when it is infrastructure (a handler for a new auth or billing event, a new transport mount), not a `todo` mount. |
