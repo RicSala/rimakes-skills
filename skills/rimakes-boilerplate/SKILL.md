@@ -46,11 +46,7 @@ If it is not, ask the user to commit or stash, and stop.
 ```bash
 git remote get-url upstream 2>/dev/null || git remote add upstream git@github.com:$REPO.git
 git fetch upstream
-git config merge.ours.driver true
 ```
-
-The last line turns on the `ours` merge driver used in step 4. It is a
-per-clone setting, so run it every time; it is harmless when already set.
 
 ### 3. Show what is new
 
@@ -87,40 +83,25 @@ Call out these, since they need action after the merge:
 - New migrations:
   `git diff --name-only $COMMIT upstream/main -- packages/db/prisma/migrations`
 - `pnpm-workspace.yaml` changed: a catalog bump (React, Expo).
-- `AGENTS.md` changed: rules the product may want to adopt. Its text does
-  not merge in when the product also changed it (step 4), so quote the
+- `AGENTS.md` changed: rules the product may want to adopt. Quote the
   changed lines.
 
-### 4. Product-owned files keep the product's version
-
-The merge driver `ours` keeps the current branch's version of a file **when
-both sides changed it**. When only upstream changed it, upstream's version
-lands as usual. Make sure the root `.gitattributes` has these lines, and
-commit it before merging if you had to add them:
-
-```
-composition/src/config/** merge=ours
-README.md merge=ours
-AGENTS.md merge=ours
-```
-
-Add a line for any other file the product rewrote and never wants back from
-the boilerplate.
-
-### 5. Merge
+### 4. Merge
 
 ```bash
 git merge --no-commit --no-ff upstream/main
 ```
 
 `--no-commit` stops before committing even when there are no conflicts, so
-steps 6 and 7 go into the same merge commit.
+steps 5 and 6 go into the same merge commit.
 
 Resolve conflicts by what the path is:
 
 | Path | Resolution |
 | --- | --- |
-| `pnpm-lock.yaml` | Never merge by hand. `git checkout --theirs pnpm-lock.yaml`; `pnpm install` in step 6 rewrites it. |
+| `pnpm-lock.yaml` | Never merge by hand. `git checkout --theirs pnpm-lock.yaml`; `pnpm install` in step 5 rewrites it. |
+| `README.md`, `composition/server/src/config/**` | The product's version: `git checkout --ours <path>`. |
+| `AGENTS.md` | Keep the product's text (`git checkout --ours AGENTS.md`), then read upstream's change (`git diff $COMMIT upstream/main -- AGENTS.md`) and carry over by hand the rules that apply to the product. |
 | A path the product deleted (`features/todo`, `apps/mobile`, …): modify/delete conflicts, or new files from upstream | Keep it deleted: `git rm -rf --quiet <path>`. `-f` is needed because upstream's new files are staged. |
 | `packages/**`, `config/**` | Take upstream: `git checkout --theirs <path>`. If the product changed the file, that change belongs in the boilerplate. Tell the user, keep upstream, and offer `/rimakes-boilerplate-issue` to send the change upstream. Carry it over by hand only if the user asks, and say it will conflict again. |
 | `composition/**` | The product's wiring wins. Bring in upstream's new wiring only when it is infrastructure (a handler for a new auth or billing event, a new transport mount), not a `todo` mount. |
@@ -133,7 +114,7 @@ on a path that holds a product change loses that change.
 
 After resolving, `git add` each path. Do not commit yet.
 
-### 6. Install and check
+### 5. Install and check
 
 ```bash
 pnpm install
@@ -149,7 +130,7 @@ an export upstream renamed that the product imports. If the failure is in
 upstream code the product did not touch, the boilerplate itself is broken:
 say so, and offer `/rimakes-boilerplate-issue`.
 
-### 7. Record and commit
+### 6. Record and commit
 
 Set `commit` in `.boilerplate.json` to `git rev-parse --short upstream/main`.
 Then:
@@ -161,7 +142,7 @@ git commit -m "chore(boilerplate): merge upstream <short sha>"
 
 Do not push; the user does.
 
-### 8. Report
+### 7. Report
 
 - What landed, by area, in a few lines.
 - Each conflict and the side kept. Name every `packages/` or `config/` file
@@ -204,9 +185,6 @@ Write `.boilerplate.json`:
   "commit": "<git rev-parse --short upstream/main>"
 }
 ```
-
-Write the `.gitattributes` lines from step 4 above, and run
-`git config merge.ours.driver true`.
 
 ### 4. Make it the product's
 
