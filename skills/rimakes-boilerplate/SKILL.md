@@ -214,10 +214,11 @@ Write the `.gitattributes` lines from step 4 above, and run
   title of `README.md`, the first line of `AGENTS.md`. Keep the rules in
   `AGENTS.md`: they are the product's rules too.
 - Ask the user whether to delete the reference feature `features/todo` now
-  or keep it as an example for a while. Deleting it also means removing its
-  mounts in `composition/`, its screens in `apps/web` and its keys in
-  `packages/i18n`, then running `pnpm typecheck`, `pnpm lint` and
-  `pnpm test` until clean.
+  or keep it as an example for a while. Deleting it means deleting
+  `features/import` too (it calls todo's mutations). Follow "Removing the
+  examples" in `features/todo/README.md`, which lists every path to delete
+  or edit, then run `pnpm typecheck`, `pnpm lint` and `pnpm test` until
+  clean.
 - Point the user at the boilerplate's `README.md` for local setup (`.env`,
   `pnpm install`, `pnpm db:start`, `pnpm db:reset`, `pnpm dev`). Do not
   repeat it here.
