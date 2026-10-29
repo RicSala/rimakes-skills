@@ -86,8 +86,9 @@ when work runs into the boilerplate, shows the draft, and posts after a yes. A l
 #### `rimakes-boilerplate`
 
 Pulls the latest boilerplate changes into a project started from it: one merge from the
-boilerplate's `upstream` remote, conflicts resolved by layer (the boilerplate owns `packages/`
-and `config/`, the product owns `composition/`, `features/` and `apps/`), checks run, and
+boilerplate's `upstream` remote, conflicts resolved by path (the boilerplate owns `packages/`,
+`config/` and its wiring in `features/src/`; the product owns its features, its config, the
+files that mount them and `apps/`), checks run, and
 `commit` in `.boilerplate.json` bumped. `new <owner>/<name>` starts a project from the
 boilerplate, wired so later updates can land. Slash-command only.
 

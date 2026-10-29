@@ -1,6 +1,6 @@
 ---
 name: rimakes-boilerplate
-description: Pull the latest boilerplate changes into a project started from it. Merges the boilerplate's `upstream` remote, resolves conflicts by layer (the boilerplate owns `packages/` and `config/`, the product owns `composition/`, `features/` and `apps/`), runs the checks and bumps `commit` in `.boilerplate.json`. With `new <owner>/<name>`, starts a new project from the boilerplate instead, wired so later updates can land.
+description: Pull the latest boilerplate changes into a project started from it. Merges the boilerplate's `upstream` remote, resolves conflicts by path (the boilerplate owns `packages/`, `config/` and its wiring in `features/src/`; the product owns its features, its config, the files that mount them and `apps/`), runs the checks and bumps `commit` in `.boilerplate.json`. With `new <owner>/<name>`, starts a new project from the boilerplate instead, wired so later updates can land.
 argument-hint: "[update | new <owner>/<name>]"
 disable-model-invocation: true
 ---
@@ -11,9 +11,12 @@ A project is a clone of the boilerplate that kept its history. The project's
 `origin` is its own repo; the boilerplate is a second remote, `upstream`.
 Updates land with one merge from `upstream/main`.
 
-The merge stays cheap because of the layers. The boilerplate owns `packages/`,
-`config/` and the root files. The product owns `composition/`, `features/` and
-`apps/`. A file only conflicts when both sides changed it.
+The merge stays cheap because each path has an owner. The boilerplate owns
+`packages/`, `config/`, the root files and its wiring in `features/src/`
+(`auth.ts`, `transport.ts`, `storage/routes.ts`, `notification/`). The
+product owns its own feature folders, `features/src/config/`, the files that
+mount its features, and `apps/`. A file only conflicts when both sides
+changed it.
 
 Mode: with `new <owner>/<name>`, start a project (second half of this file).
 With `update` or no argument, pull updates into the current project.
@@ -100,11 +103,11 @@ Resolve conflicts by what the path is:
 | Path | Resolution |
 | --- | --- |
 | `pnpm-lock.yaml` | Never merge by hand. `git checkout --theirs pnpm-lock.yaml`; `pnpm install` in step 5 rewrites it. |
-| `README.md`, `composition/server/src/config/**` | The product's version: `git checkout --ours <path>`. |
+| `README.md`, `features/src/config/**` | The product's version: `git checkout --ours <path>`. |
 | `AGENTS.md` | Resolve only the conflict blocks: keep the product's side where it describes the product (its features, its settings). Git already merged upstream's other rule changes; `git checkout --ours AGENTS.md` would drop them. |
-| A path the product deleted (`features/todo`, `apps/mobile`, …): modify/delete conflicts, or new files from upstream | Keep it deleted: `git rm -rf --quiet <path>`. `-f` is needed because upstream's new files are staged. |
-| `packages/**`, `config/**` | Take upstream: `git checkout --theirs <path>`. If the product changed the file, that change belongs in the boilerplate. Tell the user, keep upstream, and offer `/rimakes-boilerplate-issue` to send the change upstream. Carry it over by hand only if the user asks, and say it will conflict again. |
-| `composition/**` | The product's wiring wins. Bring in upstream's new wiring only when it is infrastructure (a handler for a new auth or billing event, a new transport mount), not a `todo` mount. |
+| A path the product deleted (`features/src/todo`, `apps/mobile`, …): modify/delete conflicts, or new files from upstream | Keep it deleted: `git rm -rf --quiet <path>`. `-f` is needed because upstream's new files are staged. |
+| `packages/**`, `config/**`, and the boilerplate's wiring in `features/src/`: `auth.ts`, `transport.ts`, `storage/routes.ts`, `notification/**` | Take upstream: `git checkout --theirs <path>`. If the product changed the file, that change belongs in the boilerplate. Tell the user, keep upstream, and offer `/rimakes-boilerplate-issue` to send the change upstream. Carry it over by hand only if the user asks, and say it will conflict again. |
+| The files that mount features: `features/src/trpc/router.ts`, `features/src/mcp/tools.ts`, `features/src/mcp/server.ts`, `features/src/identity-hooks.ts`, `features/src/billing/webhook.ts`, `features/package.json`, `apps/web/app/api/cron/daily/route.ts` | The product's lines win. Bring in upstream's new lines only when they are infrastructure (a new identity hook, a boilerplate router, a daily sweep, an export of a boilerplate file), not an example's (`todo`, `import`). |
 | `apps/web/components/auth/**`, `apps/web/lib/auth/**` | Vendored UI: take upstream, then re-apply the local edits listed in the project's `AGENTS.md`. |
 | Other `apps/**` | The product's screens win. Take upstream for framework files (`proxy.ts`, `next.config.ts`, `instrumentation.ts`, `env.ts`) unless the product changed them on purpose. |
 | `packages/i18n/src/dictionaries/**` | Both sides add keys. Keep both sets. The parity test catches a miss. |
@@ -145,8 +148,9 @@ Do not push; the user does.
 ### 7. Report
 
 - What landed, by area, in a few lines.
-- Each conflict and the side kept. Name every `packages/` or `config/` file
-  where the product's change was dropped or carried over.
+- Each conflict and the side kept. Name every boilerplate-owned file
+  (`packages/`, `config/`, the wiring in `features/src/`) where the
+  product's change was dropped or carried over.
 - What the user must do by hand: new env keys, migrations on production,
   rule changes from the boilerplate's `AGENTS.md`.
 
@@ -191,10 +195,10 @@ Write `.boilerplate.json`:
 - Rename what names the boilerplate: `name` in the root `package.json`, the
   title of `README.md`, the first line of `AGENTS.md`. Keep the rules in
   `AGENTS.md`: they are the product's rules too.
-- Ask the user whether to delete the reference feature `features/todo` now
-  or keep it as an example for a while. Deleting it means deleting
-  `features/import` too (it calls todo's mutations). Follow "Removing the
-  examples" in `features/todo/README.md`, which lists every path to delete
+- Ask the user whether to delete the reference feature `features/src/todo`
+  now or keep it as an example for a while. Deleting it means deleting
+  `features/src/import` too (it calls todo's mutations). Follow "Removing the
+  examples" in `features/src/todo/README.md`, which lists every path to delete
   or edit, then run `pnpm typecheck`, `pnpm lint` and `pnpm test` until
   clean.
 - Point the user at the boilerplate's `README.md` for local setup (`.env`,
@@ -207,8 +211,8 @@ Write `.boilerplate.json`:
 Tell the user, in three lines:
 
 - `/rimakes-boilerplate update` brings later boilerplate changes in.
-- Changing `packages/` or `config/` in the product is allowed, but each
-  change there conflicts at every update that touches the same file. A
+- Changing `packages/`, `config/` or the boilerplate's wiring in
+  `features/src/` in the product is allowed, but each change there conflicts at every update that touches the same file. A
   change that is not specific to this product goes to the boilerplate
   first (`/rimakes-boilerplate-issue`) and comes down with the next update.
 - Never rebase the project onto upstream. The history is shared with the
@@ -218,7 +222,7 @@ Tell the user, in three lines:
 
 - Never merge with a dirty working tree.
 - Never `git push` in update mode. In `new` mode, pushing is the point.
-- Never drop a product change in `packages/` or `config/` without saying so
+- Never drop a product change in a boilerplate-owned file without saying so
   in the report.
 - Never rebase the project's branch onto `upstream/main`.
 - `git merge --abort` only when the user asks for it.
