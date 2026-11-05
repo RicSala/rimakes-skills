@@ -28,6 +28,13 @@ log. Also updates the tracker as tasks land.
 Writes an Architecture Decision Record in `docs/ADRs/`. It first checks the decision against
 the criteria, and says so when the decision does not need an ADR. Slash-command only.
 
+#### `rimakes-feature-rule`
+
+Writes or updates the rule file for one feature, `.claude/rules/<feature>.md`, which Claude Code
+loads only when it touches that feature. The rule holds what the code cannot say and what stays
+true after a rewrite: why the feature exists, what its business words mean, its business rules,
+and the traps agents already fell into. No file names, no code details.
+
 ### Review
 
 #### `rimakes-adversarial`

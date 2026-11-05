@@ -10,7 +10,7 @@ prefer plain language, and suggest commits often (conventional commits).
 
 ## What's here
 
-Fourteen skills, each a self-contained folder under `skills/`. Every skill name starts with
+Fifteen skills, each a self-contained folder under `skills/`. Every skill name starts with
 `rimakes-`, the user's namespace; the folder name and the `name:` in `SKILL.md` always match.
 `README.md` has a one-paragraph description of each. Two need extra care:
 
