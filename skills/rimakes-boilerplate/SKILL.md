@@ -121,12 +121,27 @@ After resolving, `git add` each path. Do not commit yet.
 
 ```bash
 pnpm install
+```
+
+The integration tests use the local Postgres, Mailpit and Silo. Start what
+is not running: `pnpm db:start`, `pnpm mail:start`, `pnpm storage:start`.
+
+If new migrations came in, apply them before the checks:
+
+```bash
+pnpm --filter @package/db migrate:deploy
+```
+
+The integration tests stop at once when the database lacks a migration.
+`migrate:deploy` only applies what is pending. It never resets the database
+and never writes a new migration (`pnpm db:migrate` can do both).
+
+```bash
 pnpm typecheck && pnpm lint && pnpm test
 ```
 
-If new migrations came in, apply them locally with `pnpm db:migrate`
-(`prisma migrate dev`) and tell the user production needs
-`prisma migrate deploy` on its next release.
+Tell the user the next production deploy changes the schema: the Vercel
+build runs `migrate:deploy` (`apps/web/vercel.json`).
 
 Fix what fails when the merge caused it: a wrong side taken in a conflict,
 an export upstream renamed that the product imports. If the failure is in
@@ -151,8 +166,8 @@ Do not push; the user does.
 - Each conflict and the side kept. Name every boilerplate-owned file
   (`packages/`, `config/`, the wiring in `features/src/`) where the
   product's change was dropped or carried over.
-- What the user must do by hand: new env keys, migrations on production,
-  rule changes from the boilerplate's `AGENTS.md`.
+- What the user must do by hand: new env keys, rule changes from the
+  boilerplate's `AGENTS.md`. Say that the next deploy migrates production.
 
 ## Start a new project (`new <owner>/<name>`)
 
@@ -205,9 +220,9 @@ Write `.boilerplate.json`:
   inbox or a bucket with another clone: `cp .env.example .env` if there is
   no `.env`, then `pnpm ports pick`. It writes a free block of five ports
   into `.env`; `pnpm ports` lists them.
-- Point the user at the boilerplate's `README.md` for local setup (`.env`,
-  `pnpm install`, `pnpm db:start`, `pnpm db:reset`, `pnpm dev`). Do not
-  repeat it here.
+- Start it locally: `pnpm install`, `pnpm db:start`, `pnpm db:reset`
+  (applies every migration), `pnpm mail:start`, `pnpm dev`. The Commands
+  table in `AGENTS.md` lists the rest.
 - Commit: `chore: start <name> from boilerplate <short sha>`. Push.
 
 ### 5. Explain the update loop
