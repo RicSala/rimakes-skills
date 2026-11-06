@@ -201,6 +201,10 @@ Write `.boilerplate.json`:
   examples" in `features/src/todo/README.md`, which lists every path to delete
   or edit, then run `pnpm typecheck`, `pnpm lint` and `pnpm test` until
   clean.
+- Give the project its own local ports, so it never shares a database, an
+  inbox or a bucket with another clone: `cp .env.example .env` if there is
+  no `.env`, then `pnpm ports pick`. It writes a free block of five ports
+  into `.env`; `pnpm ports` lists them.
 - Point the user at the boilerplate's `README.md` for local setup (`.env`,
   `pnpm install`, `pnpm db:start`, `pnpm db:reset`, `pnpm dev`). Do not
   repeat it here.
